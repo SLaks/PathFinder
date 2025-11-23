@@ -1,0 +1,7 @@
+{
+  "name": "RouteOptima - Salesman Solver",
+  "description": "Import addresses from spreadsheets, solve the Travelling Salesman Problem using HERE Maps, and get efficient routing.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
