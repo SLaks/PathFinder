@@ -1,9 +1,7 @@
-declare global {
-  interface Window {
-    gapi: any;
-    google: any;
-  }
-}
+import "@types/gsi/index.d.ts";
+import "@types/gapi/index.d.ts";
+import "@types/google.picker/index.d.ts";
+import "../google.d.ts";
 
 const SCOPES = "https://www.googleapis.com/auth/drive.file";
 const DISCOVERY_DOC =
@@ -54,7 +52,6 @@ const initGis = async (clientId: string) => {
   tokenClient = window.google.accounts.oauth2.initTokenClient({
     client_id: clientId,
     scope: SCOPES,
-    callback: "", // defined at request time
   });
 };
 
@@ -95,7 +92,7 @@ export const openGooglePicker = (
       }
     };
 
-    const view = new window.google.picker.View(
+    const view = new window.google.picker.DocsView(
       window.google.picker.ViewId.SPREADSHEETS,
     );
     const picker = new window.google.picker.PickerBuilder()
@@ -116,7 +113,7 @@ export interface SheetInfo {
 }
 
 export const fetchSheetMetadata = async (
-  spreadsheetId: string
+  spreadsheetId: string,
 ): Promise<SheetInfo[]> => {
   try {
     const meta = await window.gapi.client.sheets.spreadsheets.get({
@@ -135,7 +132,7 @@ export const fetchSheetMetadata = async (
 
 export const fetchSheetRows = async (
   spreadsheetId: string,
-  sheetTitle?: string
+  sheetTitle?: string,
 ): Promise<string[]> => {
   try {
     let rangeName = "";
