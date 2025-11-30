@@ -1,4 +1,3 @@
-
 declare global {
   interface Window {
     gapi: any;
@@ -14,17 +13,22 @@ let tokenClient: any;
 let gapiInited = false;
 let gisInited = false;
 
-export const loadGoogleModules = (apiKey: string, clientId: string): Promise<void> => {
+export const loadGoogleModules = (
+  apiKey: string,
+  clientId: string,
+): Promise<void> => {
   return new Promise((resolve, reject) => {
     const checkLibs = () => {
       if (window.gapi && window.google) {
-        initGapi(apiKey).then(() => {
-          gapiInited = true;
-          initGis(clientId).then(() => {
-            gisInited = true;
-            resolve();
-          });
-        }).catch(reject);
+        initGapi(apiKey)
+          .then(() => {
+            gapiInited = true;
+            initGis(clientId).then(() => {
+              gisInited = true;
+              resolve();
+            });
+          })
+          .catch(reject);
       } else {
         setTimeout(checkLibs, 100);
       }
@@ -35,7 +39,7 @@ export const loadGoogleModules = (apiKey: string, clientId: string): Promise<voi
 
 const initGapi = async (apiKey: string) => {
   await new Promise<void>((resolve, reject) => {
-    window.gapi.load('client:picker', {
+    window.gapi.load("client:picker", {
       callback: resolve,
       onerror: reject,
     });
@@ -50,13 +54,13 @@ const initGis = async (clientId: string) => {
   tokenClient = window.google.accounts.oauth2.initTokenClient({
     client_id: clientId,
     scope: SCOPES,
-    callback: '', // defined at request time
+    callback: "", // defined at request time
   });
 };
 
 export const getAccessToken = (): Promise<string> => {
   return new Promise((resolve, reject) => {
-    if (!tokenClient) return reject('Google Identity Services not initialized');
+    if (!tokenClient) return reject("Google Identity Services not initialized");
 
     tokenClient.callback = (resp: any) => {
       if (resp.error !== undefined) {
@@ -66,14 +70,17 @@ export const getAccessToken = (): Promise<string> => {
     };
 
     // Prompt the user to select an account and provide consent
-    tokenClient.requestAccessToken({ prompt: 'consent' });
+    tokenClient.requestAccessToken({ prompt: "consent" });
   });
 };
 
-export const openGooglePicker = (accessToken: string, apiKey: string): Promise<{ id: string; name: string } | null> => {
+export const openGooglePicker = (
+  accessToken: string,
+  apiKey: string,
+): Promise<{ id: string; name: string } | null> => {
   return new Promise((resolve, reject) => {
     if (!window.google || !window.google.picker) {
-      return reject('Google Picker API not loaded');
+      return reject("Google Picker API not loaded");
     }
 
     const pickerCallback = (data: any) => {
@@ -88,7 +95,9 @@ export const openGooglePicker = (accessToken: string, apiKey: string): Promise<{
       }
     };
 
-    const view = new window.google.picker.View(window.google.picker.ViewId.SPREADSHEETS);
+    const view = new window.google.picker.View(
+      window.google.picker.ViewId.SPREADSHEETS,
+    );
     const picker = new window.google.picker.PickerBuilder()
       .setDeveloperKey(apiKey)
       .setAppId("377676797720")
@@ -101,13 +110,15 @@ export const openGooglePicker = (accessToken: string, apiKey: string): Promise<{
   });
 };
 
-export const fetchSheetRows = async (spreadsheetId: string): Promise<string[]> => {
+export const fetchSheetRows = async (
+  spreadsheetId: string,
+): Promise<string[]> => {
   try {
     // 1. Get spreadsheet metadata to find the first sheet name
     const meta = await window.gapi.client.sheets.spreadsheets.get({
       spreadsheetId: spreadsheetId,
     });
-    
+
     const firstSheetTitle = meta.result.sheets[0].properties.title;
 
     // 2. Get values from the first sheet
@@ -122,10 +133,9 @@ export const fetchSheetRows = async (spreadsheetId: string): Promise<string[]> =
     }
 
     // Convert rows to pipe-delimited strings for the Gemini parser
-    return rows.map((row: any[]) => row.join(' | '));
-
+    return rows.map((row: any[]) => row.join(" | "));
   } catch (error) {
-    console.error('Error fetching sheet data:', error);
+    console.error("Error fetching sheet data:", error);
     throw error;
   }
 };

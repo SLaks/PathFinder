@@ -2,7 +2,9 @@ import { GoogleGenAI, Type } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export const parseAddressesWithGemini = async (text: string): Promise<{name?: string, address: string}[]> => {
+export const parseAddressesWithGemini = async (
+  text: string,
+): Promise<{ name?: string; address: string }[]> => {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
@@ -22,11 +24,12 @@ export const parseAddressesWithGemini = async (text: string): Promise<{name?: st
             properties: {
               name: {
                 type: Type.STRING,
-                description: "The name of the person or location, if available."
+                description:
+                  "The name of the person or location, if available.",
               },
               address: {
                 type: Type.STRING,
-                description: "The address string."
+                description: "The address string.",
               },
             },
             required: ["address"],
