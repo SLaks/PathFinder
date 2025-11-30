@@ -110,21 +110,50 @@ export const openGooglePicker = (
   });
 };
 
-export const fetchSheetRows = async (
-  spreadsheetId: string,
-): Promise<string[]> => {
+export interface SheetInfo {
+  id: number;
+  title: string;
+}
+
+export const fetchSheetMetadata = async (
+  spreadsheetId: string
+): Promise<SheetInfo[]> => {
   try {
-    // 1. Get spreadsheet metadata to find the first sheet name
     const meta = await window.gapi.client.sheets.spreadsheets.get({
       spreadsheetId: spreadsheetId,
     });
 
-    const firstSheetTitle = meta.result.sheets[0].properties.title;
+    return meta.result.sheets.map((s: any) => ({
+      id: s.properties.sheetId,
+      title: s.properties.title,
+    }));
+  } catch (error) {
+    console.error("Error fetching sheet metadata:", error);
+    throw error;
+  }
+};
 
-    // 2. Get values from the first sheet
+export const fetchSheetRows = async (
+  spreadsheetId: string,
+  sheetTitle?: string
+): Promise<string[]> => {
+  try {
+    let rangeName = "";
+
+    if (sheetTitle) {
+      rangeName = sheetTitle;
+    } else {
+      // 1. Get spreadsheet metadata to find the first sheet name if not provided
+      const meta = await window.gapi.client.sheets.spreadsheets.get({
+        spreadsheetId: spreadsheetId,
+      });
+      rangeName = meta.result.sheets[0].properties.title;
+    }
+
+    // 2. Get values from the sheet
     const response = await window.gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId: spreadsheetId,
-      range: `${firstSheetTitle}!A1:Z100`, // Grab a reasonable chunk
+      range: `${rangeName}!A1:Z100`, // Grab a reasonable chunk
     });
 
     const rows = response.result.values;

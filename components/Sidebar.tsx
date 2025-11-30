@@ -6,6 +6,8 @@ import {
   getAccessToken,
   openGooglePicker,
   fetchSheetRows,
+  fetchSheetMetadata,
+  SheetInfo,
 } from "../services/googleSheetService";
 
 interface SidebarProps {
@@ -39,12 +41,23 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [inputText, setInputText] = useState("");
   const [importStatus, setImportStatus] = useState<ImportStatus>(
-    ImportStatus.IDLE,
+    ImportStatus.IDLE
   );
 
   // Google Sheets State
   const [sheetConfig, setSheetConfig] = useState<SheetConfig | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [sheetSelection, setSheetSelection] = useState<{
+    isOpen: boolean;
+    sheets: SheetInfo[];
+    pendingSpreadsheetId: string;
+    pendingSpreadsheetName: string;
+  }>({
+    isOpen: false,
+    sheets: [],
+    pendingSpreadsheetId: "",
+    pendingSpreadsheetName: "",
+  });
 
   // Load saved configs on mount
   useEffect(() => {
@@ -89,6 +102,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       let targetSheetId = sheetConfig?.spreadsheetId;
       let targetSheetName = sheetConfig?.spreadsheetName;
+      let targetSheetTitle = sheetConfig?.sheetTitle;
 
       // 3. Pick File if needed
       if (action === "PICK" || !targetSheetId) {
@@ -100,10 +114,27 @@ const Sidebar: React.FC<SidebarProps> = ({
         targetSheetId = file.id;
         targetSheetName = file.name;
 
-        // Save selection
-        const newConfig = {
+        // Fetch sheets to see if we need to ask user
+        const sheets = await fetchSheetMetadata(targetSheetId);
+
+        if (sheets.length > 1) {
+          setSheetSelection({
+            isOpen: true,
+            sheets,
+            pendingSpreadsheetId: targetSheetId,
+            pendingSpreadsheetName: targetSheetName,
+          });
+          setIsSyncing(false);
+          return; // Stop here, wait for user selection
+        }
+
+        // Default to first sheet
+        targetSheetTitle = sheets[0].title;
+        const newConfig: SheetConfig = {
           spreadsheetId: targetSheetId,
           spreadsheetName: targetSheetName,
+          sheetId: sheets[0].id,
+          sheetTitle: targetSheetTitle,
         };
         setSheetConfig(newConfig);
         localStorage.setItem(STORAGE_SHEET_CONFIG, JSON.stringify(newConfig));
@@ -111,15 +142,44 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       // 4. Fetch Data
       if (targetSheetId) {
-        const rows = await fetchSheetRows(targetSheetId);
+        // If syncing existing config, use its sheetTitle
+        const rows = await fetchSheetRows(targetSheetId, targetSheetTitle);
         const rawText = rows.join("\n");
         await processTextData(rawText);
       }
     } catch (error) {
       console.error("Google Sheet Error:", error);
       alert(
-        "Failed to connect to Google Sheets. Ensure your account has access.",
+        "Failed to connect to Google Sheets. Ensure your account has access."
       );
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSheetSelect = async (sheet: SheetInfo) => {
+    setSheetSelection((prev) => ({ ...prev, isOpen: false }));
+    setIsSyncing(true);
+
+    try {
+      const { pendingSpreadsheetId, pendingSpreadsheetName } = sheetSelection;
+
+      const newConfig: SheetConfig = {
+        spreadsheetId: pendingSpreadsheetId,
+        spreadsheetName: pendingSpreadsheetName,
+        sheetId: sheet.id,
+        sheetTitle: sheet.title,
+      };
+
+      setSheetConfig(newConfig);
+      localStorage.setItem(STORAGE_SHEET_CONFIG, JSON.stringify(newConfig));
+
+      const rows = await fetchSheetRows(pendingSpreadsheetId, sheet.title);
+      const rawText = rows.join("\n");
+      await processTextData(rawText);
+    } catch (error) {
+      console.error("Error selecting sheet:", error);
+      alert("Failed to load selected sheet.");
     } finally {
       setIsSyncing(false);
     }
@@ -160,6 +220,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             {sheetConfig && (
               <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full truncate max-w-[150px]">
                 {sheetConfig.spreadsheetName}
+                {sheetConfig.sheetTitle && ` / ${sheetConfig.sheetTitle}`}
               </span>
             )}
           </div>
@@ -314,7 +375,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         ></path>
                       </svg>
                     ) : (
-                      (addr.sequenceOrder ?? idx + 1)
+                      addr.sequenceOrder ?? idx + 1
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -324,7 +385,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                       </p>
                     )}
                     <p
-                      className={`${addr.name ? "text-gray-500 text-xs" : "text-gray-900 font-medium"} truncate`}
+                      className={`${
+                        addr.name
+                          ? "text-gray-500 text-xs"
+                          : "text-gray-900 font-medium"
+                      } truncate`}
                     >
                       {addr.formattedAddress || addr.originalText}
                     </p>
@@ -404,6 +469,55 @@ const Sidebar: React.FC<SidebarProps> = ({
           </a>
         )}
       </div>
+      {/* Sheet Selection Modal */}
+      {sheetSelection.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden">
+            <div className="p-4 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900">Select Sheet</h3>
+              <p className="text-xs text-gray-500">
+                {sheetSelection.pendingSpreadsheetName}
+              </p>
+            </div>
+            <div className="max-h-60 overflow-y-auto p-2">
+              {sheetSelection.sheets.map((sheet) => (
+                <button
+                  key={sheet.id}
+                  onClick={() => handleSheetSelect(sheet)}
+                  className="w-full text-left px-4 py-3 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-between group"
+                >
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">
+                    {sheet.title}
+                  </span>
+                  <svg
+                    className="w-4 h-4 text-gray-300 group-hover:text-blue-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              ))}
+            </div>
+            <div className="p-3 bg-gray-50 border-t border-gray-100">
+              <button
+                onClick={() =>
+                  setSheetSelection((prev) => ({ ...prev, isOpen: false }))
+                }
+                className="w-full py-2 text-sm text-gray-600 hover:text-gray-800 font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

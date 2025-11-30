@@ -42,4 +42,6 @@ export interface GoogleCreds {
 export interface SheetConfig {
   spreadsheetId: string;
   spreadsheetName: string;
+  sheetId?: number;
+  sheetTitle?: string;
 }
