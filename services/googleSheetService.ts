@@ -70,7 +70,7 @@ export const getAccessToken = (): Promise<string> => {
     };
 
     // Prompt the user to select an account and provide consent
-    tokenClient.requestAccessToken({ prompt: "consent" });
+    tokenClient.requestAccessToken({ prompt: "" });
   });
 };
 
