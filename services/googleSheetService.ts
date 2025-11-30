@@ -6,8 +6,9 @@ declare global {
   }
 }
 
-const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets.readonly';
-const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
+const SCOPES = "https://www.googleapis.com/auth/drive.file";
+const DISCOVERY_DOC =
+  "https://sheets.googleapis.com/$discovery/rest?version=v4";
 
 let tokenClient: any;
 let gapiInited = false;
@@ -90,7 +91,7 @@ export const openGooglePicker = (accessToken: string, apiKey: string): Promise<{
     const view = new window.google.picker.View(window.google.picker.ViewId.SPREADSHEETS);
     const picker = new window.google.picker.PickerBuilder()
       .setDeveloperKey(apiKey)
-      .setAppId(apiKey) // Typically project ID, but API key often works for simple restrict
+      .setAppId("377676797720")
       .setOAuthToken(accessToken)
       .addView(view)
       .setCallback(pickerCallback)
