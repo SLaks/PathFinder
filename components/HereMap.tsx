@@ -32,9 +32,7 @@ const HereMap: React.FC<HereMapProps> = ({
       if (!uiRef.current) return;
 
       // Close existing bubbles
-      uiRef
-        .current!.getBubbles()
-        .forEach((b) => uiRef.current!.removeBubble(b));
+      uiRef.current.getBubbles().forEach((b) => uiRef.current!.removeBubble(b));
 
       const content = renderToString(
         <div className="p-2">
@@ -47,9 +45,14 @@ const HereMap: React.FC<HereMapProps> = ({
       );
 
       const point = marker.getGeometry() as H.geo.Point;
-      const bubble = new window.H.ui.InfoBubble(point, {
-        content: content,
-      });
+      const hMap = hMapRef.current!;
+
+      // Move the point up so it doesn't cover the marker.
+      const { x, y } = hMap.geoToScreen(point)!;
+      const bubble = new window.H.ui.InfoBubble(
+        hMap.screenToGeo(x, y - 36) || point,
+        { content }
+      );
       uiRef.current!.addBubble(bubble);
     },
     [addresses]
