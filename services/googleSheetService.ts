@@ -11,10 +11,7 @@ let tokenClient: any;
 let gapiInited = false;
 let gisInited = false;
 
-export const loadGoogleModules = (
-  apiKey: string,
-  clientId: string,
-): Promise<void> => {
+export const loadGoogleModules = (apiKey: string, clientId: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     const checkLibs = () => {
       if (window.gapi && window.google) {
@@ -55,14 +52,38 @@ const initGis = async (clientId: string) => {
   });
 };
 
+const STORAGE_KEY = "google_access_token";
+const EXPIRY_KEY = "google_access_token_expiry";
+
 export const getAccessToken = (): Promise<string> => {
   return new Promise((resolve, reject) => {
+    // 1. Check local storage
+    const storedToken = localStorage.getItem(STORAGE_KEY);
+    const storedExpiry = localStorage.getItem(EXPIRY_KEY);
+
+    if (storedToken && storedExpiry) {
+      const expiryTime = parseInt(storedExpiry, 10);
+      // Add a buffer of 5 minutes to be safe
+      if (Date.now() < expiryTime - 5 * 60 * 1000) {
+        gapi.client.setToken({ access_token: storedToken });
+        return resolve(storedToken);
+      }
+    }
+
     if (!tokenClient) return reject("Google Identity Services not initialized");
 
     tokenClient.callback = (resp: any) => {
       if (resp.error !== undefined) {
         reject(resp);
       }
+
+      // 2. Save to local storage
+      const expiresIn = resp.expires_in || 3599; // Default to ~1 hour if missing
+      const expiryTime = Date.now() + expiresIn * 1000;
+
+      localStorage.setItem(STORAGE_KEY, resp.access_token);
+      localStorage.setItem(EXPIRY_KEY, expiryTime.toString());
+
       resolve(resp.access_token);
     };
 
@@ -73,7 +94,7 @@ export const getAccessToken = (): Promise<string> => {
 
 export const openGooglePicker = (
   accessToken: string,
-  apiKey: string,
+  apiKey: string
 ): Promise<{ id: string; name: string } | null> => {
   return new Promise((resolve, reject) => {
     if (!window.google || !window.google.picker) {
@@ -93,7 +114,7 @@ export const openGooglePicker = (
     };
 
     const view = new window.google.picker.DocsView(
-      window.google.picker.ViewId.SPREADSHEETS,
+      window.google.picker.ViewId.SPREADSHEETS
     );
     const picker = new window.google.picker.PickerBuilder()
       .setDeveloperKey(apiKey)
@@ -113,7 +134,7 @@ export interface SheetInfo {
 }
 
 export const fetchSheetMetadata = async (
-  spreadsheetId: string,
+  spreadsheetId: string
 ): Promise<SheetInfo[]> => {
   try {
     const meta = await window.gapi.client.sheets.spreadsheets.get({
@@ -132,7 +153,7 @@ export const fetchSheetMetadata = async (
 
 export const fetchSheetRows = async (
   spreadsheetId: string,
-  sheetTitle?: string,
+  sheetTitle?: string
 ): Promise<string[]> => {
   try {
     let rangeName = "";
