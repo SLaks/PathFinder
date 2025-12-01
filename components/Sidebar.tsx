@@ -9,6 +9,7 @@ import {
   fetchSheetMetadata,
   SheetInfo,
 } from "../services/googleSheetService";
+import { AddressCard } from "./AddressCard";
 
 interface SidebarProps {
   addresses: Address[];
@@ -338,81 +339,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <p className="text-gray-400 text-sm">No addresses added yet.</p>
               </div>
             )}
-            {addresses.map((addr, idx) => {
-              const isError = !addr.location && !addr.isGeocoding;
-              const isLoading = addr.isGeocoding;
-
-              let rowClass = "bg-white border-gray-200 hover:border-blue-300";
-              if (isError) rowClass = "bg-red-50 border-red-100";
-              if (isLoading) rowClass = "bg-blue-50 border-blue-100";
-
-              return (
-                <div
-                  key={addr.id}
-                  onClick={() => onFocusAddress(addr.id)}
-                  className={`p-3 rounded-lg border text-sm flex gap-3 items-start transition-all cursor-pointer ${rowClass}`}
-                >
-                  <div
-                    className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      addr.sequenceOrder
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-gray-100 text-gray-500"
-                    }`}
-                  >
-                    {isLoading ? (
-                      <svg
-                        className="animate-spin h-4 w-4 text-blue-600"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                    ) : (
-                      addr.sequenceOrder ?? idx + 1
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    {addr.name && (
-                      <p className="text-gray-900 font-bold truncate">
-                        {addr.name}
-                      </p>
-                    )}
-                    <p
-                      className={`${
-                        addr.name
-                          ? "text-gray-500 text-xs"
-                          : "text-gray-900 font-medium"
-                      } truncate`}
-                    >
-                      {addr.formattedAddress || addr.originalText}
-                    </p>
-                    {isLoading && (
-                      <p className="text-xs text-blue-600 mt-0.5">
-                        Finding location...
-                      </p>
-                    )}
-                    {isError && (
-                      <p className="text-xs text-red-500 mt-0.5">
-                        Location not found
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {addresses.map((addr, idx) => (
+              <AddressCard
+                key={addr.id}
+                address={addr}
+                index={idx}
+                onClick={() => onFocusAddress(addr.id)}
+                className="p-3"
+              />
+            ))}
           </div>
         </div>
       </div>

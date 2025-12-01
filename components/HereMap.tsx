@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useRef } from "react";
+import { renderToString } from "react-dom/server";
 import { Address, GeoPoint } from "../types";
 import "@here/maps-api-for-javascript";
+import { getAddressColor } from "../utils/colors";
+import { getInitials } from "../utils/formatters";
+import { AddressCard } from "./AddressCard";
 
 interface HereMapProps {
   apiKey: string;
@@ -23,16 +27,6 @@ const HereMap: React.FC<HereMapProps> = ({
   const groupRef = useRef<any>(null);
   const routeGroupRef = useRef<any>(null);
 
-  // Helper to escape HTML
-  const escapeHtml = (unsafe: string) => {
-    return unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  };
-
   const showBubble = useCallback(
     (addr: Address, marker: any) => {
       if (!uiRef.current) return;
@@ -42,26 +36,16 @@ const HereMap: React.FC<HereMapProps> = ({
         .getBubbles()
         .forEach((b: any) => uiRef.current.removeBubble(b));
 
-      const label =
-        addr.sequenceOrder !== undefined
-          ? `${addr.sequenceOrder}`
-          : `${addresses.indexOf(addr) + 1}`;
-
-      const safeName = addr.name ? escapeHtml(addr.name) : "";
-      const safeAddress = escapeHtml(
-        addr.formattedAddress || addr.originalText
+      const content = renderToString(
+        <div className="p-2">
+          <AddressCard
+            address={addr}
+            index={addresses.indexOf(addr)}
+            isCompact
+          />
+        </div>
       );
 
-      const content = `
-          <div class="p-2 text-sm">
-              ${
-                safeName
-                  ? `<div class="font-bold text-base mb-1">${safeName}</div>`
-                  : ""
-              }
-              <div><b>${label}.</b> ${safeAddress}</div>
-          </div>
-       `;
       const bubble = new window.H.ui.InfoBubble(marker.getGeometry(), {
         content: content,
       });
@@ -144,14 +128,12 @@ const HereMap: React.FC<HereMapProps> = ({
     // Address Markers
     addresses.forEach((addr, index) => {
       if (addr.location) {
-        const label =
-          addr.sequenceOrder !== undefined
-            ? `${addr.sequenceOrder}`
-            : `${index + 1}`;
+        const color = getAddressColor(index);
+        const initials = getInitials(addr.name || addr.originalText);
 
         const svgMarkup = `<svg width="30" height="36" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 0C6.7 0 0 6.7 0 15c0 10 15 21 15 21s15-11 15-21c0-8.3-6.7-15-15-15z" fill="#ea4335" stroke="white" stroke-width="2"/>
-          <text x="15" y="21" font-size="12" font-family="Arial" font-weight="bold" text-anchor="middle" fill="white">${label}</text>
+          <path d="M15 0C6.7 0 0 6.7 0 15c0 10 15 21 15 21s15-11 15-21c0-8.3-6.7-15-15-15z" fill="${color}" stroke="white" stroke-width="2"/>
+          <text x="15" y="21" font-size="12" font-family="Arial" font-weight="bold" text-anchor="middle" fill="white">${initials}</text>
         </svg>`;
 
         const icon = new window.H.map.Icon(svgMarkup, {
