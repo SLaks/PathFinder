@@ -1,12 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Address, GeoPoint } from "../types";
-
-// Declare global HERE namespace
-declare global {
-  interface Window {
-    H: any;
-  }
-}
+import "@here/maps-api-for-javascript";
 
 interface HereMapProps {
   apiKey: string;
@@ -137,6 +131,7 @@ const HereMap: React.FC<HereMapProps> = ({
       );
       const userMarker = new window.H.map.Marker(userLocation, {
         icon: userIcon,
+        data: { id: "user" },
       });
       group.addObject(userMarker);
     }
@@ -157,8 +152,10 @@ const HereMap: React.FC<HereMapProps> = ({
         const icon = new window.H.map.Icon(svgMarkup, {
           anchor: { x: 15, y: 36 },
         });
-        const marker = new window.H.map.Marker(addr.location, { icon });
-        marker.setData({ id: addr.id });
+        const marker = new window.H.map.Marker(addr.location, {
+          icon,
+          data: { id: addr.id },
+        });
 
         // Add bubble
         marker.addEventListener("tap", () => {
@@ -219,9 +216,11 @@ const HereMap: React.FC<HereMapProps> = ({
             strokeColor: "rgba(0, 0, 0, 0.5)",
             lineCap: "butt",
           },
+          data: { id: "route-outline" },
         });
         const routeLine = new window.H.map.Polyline(lineString, {
           style: { lineWidth: 4, strokeColor: "#2563eb", lineCap: "butt" },
+          data: { id: "route" },
         });
 
         routeGroup.addObject(outline);
