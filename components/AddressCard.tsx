@@ -7,6 +7,8 @@ interface AddressCardProps {
   address: Address;
   index: number;
   onClick?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
   className?: string;
   isCompact?: boolean; // For map bubble
 }
@@ -15,6 +17,8 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   address,
   index,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
   className = "",
   isCompact = false,
 }) => {
@@ -24,7 +28,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   const isError = !address.location && !address.isGeocoding;
 
   let containerClass = `rounded-lg border flex gap-3 items-start transition-all ${className}`;
-  
+
   if (onClick) containerClass += " cursor-pointer";
 
   if (isError) {
@@ -41,7 +45,12 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   }
 
   return (
-    <div className={containerClass} onClick={onClick}>
+    <div
+      className={containerClass}
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       {/* Avatar / Initials */}
       <div
         className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm"
@@ -76,14 +85,16 @@ export const AddressCard: React.FC<AddressCardProps> = ({
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-           <span className="text-xs font-bold text-gray-400">#{address.sequenceOrder ?? index + 1}</span>
-           {address.name && (
+          <span className="text-xs font-bold text-gray-400">
+            #{address.sequenceOrder ?? index + 1}
+          </span>
+          {address.name && (
             <p className="text-gray-900 font-bold truncate text-sm">
               {address.name}
             </p>
           )}
         </div>
-       
+
         <p
           className={`${
             address.name
@@ -93,7 +104,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
         >
           {address.formattedAddress || address.originalText}
         </p>
-        
+
         {isLoading && (
           <p className="text-xs text-blue-600 mt-0.5">Finding location...</p>
         )}

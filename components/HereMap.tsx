@@ -12,6 +12,7 @@ interface HereMapProps {
   addresses: Address[];
   routeShape: string[]; // Encoded polylines
   focusedAddressId: string | null;
+  hoveredAddressId: string | null;
 }
 
 const HereMap: React.FC<HereMapProps> = ({
@@ -20,12 +21,14 @@ const HereMap: React.FC<HereMapProps> = ({
   addresses,
   routeShape,
   focusedAddressId,
+  hoveredAddressId,
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const hMapRef = useRef<H.Map>(null);
   const uiRef = useRef<H.ui.UI>(null);
   const groupRef = useRef<H.map.Group>(null);
   const routeGroupRef = useRef<H.map.Group>(null);
+  const hoverCircleRef = useRef<H.map.Circle | null>(null);
 
   const showBubble = useCallback(
     (addr: Address, marker: H.map.Marker) => {
@@ -190,6 +193,37 @@ const HereMap: React.FC<HereMapProps> = ({
       }
     }
   }, [focusedAddressId, addresses, showBubble]);
+
+  // Handle Hover Highlight with Circle
+  useEffect(() => {
+    if (!hMapRef.current || !window.H) return;
+
+    const map = hMapRef.current;
+
+    // Remove existing hover circle
+    if (hoverCircleRef.current) {
+      map.removeObject(hoverCircleRef.current);
+      hoverCircleRef.current = null;
+    }
+
+    // Add new hover circle if there's a hovered address
+    if (hoveredAddressId) {
+      const targetAddr = addresses.find((a) => a.id === hoveredAddressId);
+      if (targetAddr && targetAddr.location) {
+        const circle = new window.H.map.Circle(
+          targetAddr.location,
+          50 // radius in meters
+        );
+        circle.setStyle({
+          strokeColor: "rgba(37, 99, 235, 0.8)", // blue-600
+          lineWidth: 3,
+          fillColor: "rgba(37, 99, 235, 0.2)",
+        });
+        map.addObject(circle);
+        hoverCircleRef.current = circle;
+      }
+    }
+  }, [hoveredAddressId, addresses]);
 
   // Update Route Polyline
   useEffect(() => {

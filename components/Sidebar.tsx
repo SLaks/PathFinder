@@ -20,6 +20,7 @@ interface SidebarProps {
   userLocation: GeoPoint | null;
   onResetKey: () => void;
   onFocusAddress: (id: string) => void;
+  onHoverAddress: (id: string | null) => void;
 }
 
 const STORAGE_SHEET_CONFIG = "routeoptima_sheet_config";
@@ -41,6 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   userLocation,
   onResetKey,
   onFocusAddress,
+  onHoverAddress,
 }) => {
   const [inputText, setInputText] = useState("");
   const [importStatus, setImportStatus] = useState<ImportStatus>(
@@ -345,6 +347,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 address={addr}
                 index={idx}
                 onClick={() => onFocusAddress(addr.id)}
+                onMouseEnter={() => onHoverAddress(addr.id)}
+                onMouseLeave={() => onHoverAddress(null)}
                 className="p-3"
               />
             ))}

@@ -24,6 +24,7 @@ const App: React.FC = () => {
   const [isGeocoding, setIsGeocoding] = useState<boolean>(false);
   const [routeShape, setRouteShape] = useState<string[]>([]);
   const [focusedAddressId, setFocusedAddressId] = useState<string | null>(null);
+  const [hoveredAddressId, setHoveredAddressId] = useState<string | null>(null);
 
   // Mobile UI State
   const [mobileTab, setMobileTab] = useState<"list" | "map">("list");
@@ -195,7 +196,8 @@ const App: React.FC = () => {
               <a
                 href="https://platform.here.com/"
                 target="_blank"
-                className="text-blue-600 underline" rel="noreferrer"
+                className="text-blue-600 underline"
+                rel="noreferrer"
               >
                 developer.here.com
               </a>
@@ -245,6 +247,7 @@ const App: React.FC = () => {
             userLocation={userLocation}
             onResetKey={handleResetKey}
             onFocusAddress={setFocusedAddressId}
+            onHoverAddress={setHoveredAddressId}
           />
         </div>
 
@@ -260,6 +263,7 @@ const App: React.FC = () => {
             addresses={addresses}
             routeShape={routeShape}
             focusedAddressId={focusedAddressId}
+            hoveredAddressId={hoveredAddressId}
           />
           {!userLocation && !showKeyModal && (
             <div className="absolute top-4 right-4 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-md text-sm font-medium shadow-sm z-10">
