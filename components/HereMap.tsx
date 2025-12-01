@@ -22,19 +22,19 @@ const HereMap: React.FC<HereMapProps> = ({
   focusedAddressId,
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const hMapRef = useRef<any>(null);
-  const uiRef = useRef<any>(null);
-  const groupRef = useRef<any>(null);
-  const routeGroupRef = useRef<any>(null);
+  const hMapRef = useRef<H.Map>(null);
+  const uiRef = useRef<H.ui.UI>(null);
+  const groupRef = useRef<H.map.Group>(null);
+  const routeGroupRef = useRef<H.map.Group>(null);
 
   const showBubble = useCallback(
-    (addr: Address, marker: any) => {
+    (addr: Address, marker: H.map.Marker) => {
       if (!uiRef.current) return;
 
       // Close existing bubbles
-      uiRef.current
-        .getBubbles()
-        .forEach((b: any) => uiRef.current.removeBubble(b));
+      uiRef
+        .current!.getBubbles()
+        .forEach((b) => uiRef.current!.removeBubble(b));
 
       const content = renderToString(
         <div className="p-2">
@@ -46,10 +46,11 @@ const HereMap: React.FC<HereMapProps> = ({
         </div>
       );
 
-      const bubble = new window.H.ui.InfoBubble(marker.getGeometry(), {
+      const point = marker.getGeometry() as H.geo.Point;
+      const bubble = new window.H.ui.InfoBubble(point, {
         content: content,
       });
-      uiRef.current.addBubble(bubble);
+      uiRef.current!.addBubble(bubble);
     },
     [addresses]
   );
@@ -79,7 +80,7 @@ const HereMap: React.FC<HereMapProps> = ({
     new window.H.mapevents.Behavior(new window.H.mapevents.MapEvents(map));
 
     // UI
-    uiRef.current = window.H.ui.UI.createDefault(map, defaultLayers);
+    uiRef.current! = window.H.ui.UI.createDefault(map, defaultLayers);
 
     // Group for Markers
     const group = new window.H.map.Group();
@@ -109,7 +110,7 @@ const HereMap: React.FC<HereMapProps> = ({
     if (!hMapRef.current || !window.H) return;
 
     const map = hMapRef.current;
-    const group = groupRef.current;
+    const group = groupRef.current!;
     group.removeAll();
 
     // User Location Marker
@@ -177,9 +178,9 @@ const HereMap: React.FC<HereMapProps> = ({
 
       // Show Bubble
       const markers = groupRef.current.getObjects();
-      const targetMarker = markers.find(
-        (m: any) => m.getData()?.id === focusedAddressId
-      );
+      const targetMarker = markers
+        .filter((m) => m instanceof H.map.Marker)
+        .find((m) => m.getData()?.id === focusedAddressId);
 
       if (targetMarker) {
         showBubble(targetAddr, targetMarker);
