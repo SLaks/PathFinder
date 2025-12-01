@@ -67,31 +67,34 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (savedSheet) setSheetConfig(JSON.parse(savedSheet));
   }, []);
 
-  const processTextData = async (text: string) => {
-    setImportStatus(ImportStatus.PARSING);
-    try {
-      const parsed = await parseAddressesWithGemini(text);
-      const newAddresses: Address[] = parsed.map((item) => ({
-        id: Math.random().toString(36).substr(2, 9),
-        originalText: item.address,
-        name: item.name,
-        isGeocoding: true,
-      }));
-      setAddresses(newAddresses);
-      setImportStatus(ImportStatus.SUCCESS);
+  const processTextData = useCallback(
+    async (text: string) => {
+      setImportStatus(ImportStatus.PARSING);
+      try {
+        const parsed = await parseAddressesWithGemini(text);
+        const newAddresses: Address[] = parsed.map((item) => ({
+          id: Math.random().toString(36).substr(2, 9),
+          originalText: item.address,
+          name: item.name,
+          isGeocoding: true,
+        }));
+        setAddresses(newAddresses);
+        setImportStatus(ImportStatus.SUCCESS);
 
-      // Clear status after 3 seconds
-      setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
-    } catch (e) {
-      console.error(e);
-      setImportStatus(ImportStatus.ERROR);
-    }
-  };
+        // Clear status after 3 seconds
+        setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
+      } catch (e) {
+        console.error(e);
+        setImportStatus(ImportStatus.ERROR);
+      }
+    },
+    [setAddresses, setImportStatus]
+  );
 
   const handleImport = useCallback(async () => {
     if (!inputText.trim()) return;
     await processTextData(inputText);
-  }, [inputText, setAddresses]);
+  }, [inputText, processTextData]);
 
   const handleGoogleAction = async (action: "PICK" | "SYNC") => {
     setIsSyncing(true);

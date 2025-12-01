@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import HereMap from "./components/HereMap";
 import Sidebar from "./components/Sidebar";
-import { Address, GeoPoint, AppState } from "./types";
+import { Address, GeoPoint } from "./types";
 import {
   geocodeAddress,
   calculateOptimalSequence,
@@ -127,7 +127,7 @@ const App: React.FC = () => {
     };
 
     geocodePending();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [addresses, apiKey, userZip, isGeocoding]);
 
   const handleOptimize = async () => {
@@ -195,7 +195,7 @@ const App: React.FC = () => {
               <a
                 href="https://platform.here.com/"
                 target="_blank"
-                className="text-blue-600 underline"
+                className="text-blue-600 underline" rel="noreferrer"
               >
                 developer.here.com
               </a>

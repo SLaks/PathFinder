@@ -25,7 +25,7 @@ function getFromCache(
     const cache: CacheEntry[] = JSON.parse(raw);
     const entry = cache.find((c) => c.key === key);
     return entry ? entry.data : null;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -60,7 +60,7 @@ async function fetchWithChecks(url: string, apiName: string): Promise<any> {
   let response;
   try {
     response = await fetch(url);
-  } catch (e) {
+  } catch {
     throw new Error(`${apiName} network error. Please check your connection.`);
   }
 

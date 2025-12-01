@@ -8,20 +8,17 @@ const DISCOVERY_DOC =
   "https://sheets.googleapis.com/$discovery/rest?version=v4";
 
 let tokenClient: any;
-let gapiInited = false;
-let gisInited = false;
 
-export const loadGoogleModules = (apiKey: string, clientId: string): Promise<void> => {
+export const loadGoogleModules = (
+  apiKey: string,
+  clientId: string
+): Promise<void> => {
   return new Promise((resolve, reject) => {
     const checkLibs = () => {
       if (window.gapi && window.google) {
         initGapi(apiKey)
           .then(() => {
-            gapiInited = true;
-            initGis(clientId).then(() => {
-              gisInited = true;
-              resolve();
-            });
+            initGis(clientId).then(resolve);
           })
           .catch(reject);
       } else {

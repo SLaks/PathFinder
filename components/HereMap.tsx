@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { Address, GeoPoint } from "../types";
 import "@here/maps-api-for-javascript";
 
@@ -33,23 +33,26 @@ const HereMap: React.FC<HereMapProps> = ({
       .replace(/'/g, "&#039;");
   };
 
-  const showBubble = (addr: Address, marker: any) => {
-    if (!uiRef.current) return;
+  const showBubble = useCallback(
+    (addr: Address, marker: any) => {
+      if (!uiRef.current) return;
 
-    // Close existing bubbles
-    uiRef.current
-      .getBubbles()
-      .forEach((b: any) => uiRef.current.removeBubble(b));
+      // Close existing bubbles
+      uiRef.current
+        .getBubbles()
+        .forEach((b: any) => uiRef.current.removeBubble(b));
 
-    const label =
-      addr.sequenceOrder !== undefined
-        ? `${addr.sequenceOrder}`
-        : `${addresses.indexOf(addr) + 1}`;
+      const label =
+        addr.sequenceOrder !== undefined
+          ? `${addr.sequenceOrder}`
+          : `${addresses.indexOf(addr) + 1}`;
 
-    const safeName = addr.name ? escapeHtml(addr.name) : "";
-    const safeAddress = escapeHtml(addr.formattedAddress || addr.originalText);
+      const safeName = addr.name ? escapeHtml(addr.name) : "";
+      const safeAddress = escapeHtml(
+        addr.formattedAddress || addr.originalText
+      );
 
-    const content = `
+      const content = `
           <div class="p-2 text-sm">
               ${
                 safeName
@@ -59,11 +62,13 @@ const HereMap: React.FC<HereMapProps> = ({
               <div><b>${label}.</b> ${safeAddress}</div>
           </div>
        `;
-    const bubble = new window.H.ui.InfoBubble(marker.getGeometry(), {
-      content: content,
-    });
-    uiRef.current.addBubble(bubble);
-  };
+      const bubble = new window.H.ui.InfoBubble(marker.getGeometry(), {
+        content: content,
+      });
+      uiRef.current.addBubble(bubble);
+    },
+    [addresses]
+  );
 
   // Initialize Map
   useEffect(() => {
@@ -171,7 +176,7 @@ const HereMap: React.FC<HereMapProps> = ({
         bounds: group.getBoundingBox(),
       });
     }
-  }, [addresses, userLocation]);
+  }, [addresses, userLocation, showBubble]);
 
   // Handle Focus Address
   useEffect(() => {
@@ -198,7 +203,7 @@ const HereMap: React.FC<HereMapProps> = ({
         showBubble(targetAddr, targetMarker);
       }
     }
-  }, [focusedAddressId, addresses]);
+  }, [focusedAddressId, addresses, showBubble]);
 
   // Update Route Polyline
   useEffect(() => {
