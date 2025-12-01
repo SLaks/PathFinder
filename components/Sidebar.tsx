@@ -18,6 +18,7 @@ interface SidebarProps {
   isGeocoding: boolean;
   userLocation: GeoPoint | null;
   onResetKey: () => void;
+  onFocusAddress: (id: string) => void;
 }
 
 const STORAGE_SHEET_CONFIG = "routeoptima_sheet_config";
@@ -38,6 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   isGeocoding,
   userLocation,
   onResetKey,
+  onFocusAddress,
 }) => {
   const [inputText, setInputText] = useState("");
   const [importStatus, setImportStatus] = useState<ImportStatus>(
@@ -344,7 +346,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               return (
                 <div
                   key={addr.id}
-                  className={`p-3 rounded-lg border text-sm flex gap-3 items-start transition-all ${rowClass}`}
+                  onClick={() => onFocusAddress(addr.id)}
+                  className={`p-3 rounded-lg border text-sm flex gap-3 items-start transition-all cursor-pointer ${rowClass}`}
                 >
                   <div
                     className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${

@@ -23,6 +23,7 @@ const App: React.FC = () => {
   const [isOptimizing, setIsOptimizing] = useState<boolean>(false);
   const [isGeocoding, setIsGeocoding] = useState<boolean>(false);
   const [routeShape, setRouteShape] = useState<string[]>([]);
+  const [focusedAddressId, setFocusedAddressId] = useState<string | null>(null);
 
   // Mobile UI State
   const [mobileTab, setMobileTab] = useState<"list" | "map">("list");
@@ -231,7 +232,9 @@ const App: React.FC = () => {
       <div className="flex-1 flex relative overflow-hidden">
         {/* Sidebar Container */}
         <div
-          className={`w-full md:w-96 bg-white z-20 h-full flex-shrink-0 flex flex-col ${mobileTab === "list" ? "block" : "hidden md:block"}`}
+          className={`w-full md:w-96 bg-white z-20 h-full flex-shrink-0 flex flex-col ${
+            mobileTab === "list" ? "block" : "hidden md:block"
+          }`}
         >
           <Sidebar
             addresses={addresses}
@@ -241,18 +244,22 @@ const App: React.FC = () => {
             isGeocoding={isGeocoding}
             userLocation={userLocation}
             onResetKey={handleResetKey}
+            onFocusAddress={setFocusedAddressId}
           />
         </div>
 
         {/* Map Container */}
         <div
-          className={`flex-1 h-full relative ${mobileTab === "map" ? "block" : "hidden md:block"}`}
+          className={`flex-1 h-full relative ${
+            mobileTab === "map" ? "block" : "hidden md:block"
+          }`}
         >
           <HereMap
             apiKey={apiKey}
             userLocation={userLocation}
             addresses={addresses}
             routeShape={routeShape}
+            focusedAddressId={focusedAddressId}
           />
           {!userLocation && !showKeyModal && (
             <div className="absolute top-4 right-4 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-md text-sm font-medium shadow-sm z-10">
@@ -266,7 +273,11 @@ const App: React.FC = () => {
       <div className="md:hidden bg-white border-t border-gray-200 flex h-16 shrink-0 z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <button
           onClick={() => setMobileTab("list")}
-          className={`flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors ${mobileTab === "list" ? "text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors ${
+            mobileTab === "list"
+              ? "text-blue-600"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -290,7 +301,11 @@ const App: React.FC = () => {
         </button>
         <button
           onClick={() => setMobileTab("map")}
-          className={`flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors ${mobileTab === "map" ? "text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors ${
+            mobileTab === "map"
+              ? "text-blue-600"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

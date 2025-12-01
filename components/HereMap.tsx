@@ -13,6 +13,7 @@ interface HereMapProps {
   userLocation: GeoPoint | null;
   addresses: Address[];
   routeShape: string[]; // Encoded polylines
+  focusedAddressId: string | null;
 }
 
 const HereMap: React.FC<HereMapProps> = ({
@@ -20,12 +21,55 @@ const HereMap: React.FC<HereMapProps> = ({
   userLocation,
   addresses,
   routeShape,
+  focusedAddressId,
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const hMapRef = useRef<any>(null);
   const uiRef = useRef<any>(null);
   const groupRef = useRef<any>(null);
   const routeGroupRef = useRef<any>(null);
+
+  // Helper to escape HTML
+  const escapeHtml = (unsafe: string) => {
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+
+  const showBubble = (addr: Address, marker: any) => {
+    if (!uiRef.current) return;
+
+    // Close existing bubbles
+    uiRef.current
+      .getBubbles()
+      .forEach((b: any) => uiRef.current.removeBubble(b));
+
+    const label =
+      addr.sequenceOrder !== undefined
+        ? `${addr.sequenceOrder}`
+        : `${addresses.indexOf(addr) + 1}`;
+
+    const safeName = addr.name ? escapeHtml(addr.name) : "";
+    const safeAddress = escapeHtml(addr.formattedAddress || addr.originalText);
+
+    const content = `
+          <div class="p-2 text-sm">
+              ${
+                safeName
+                  ? `<div class="font-bold text-base mb-1">${safeName}</div>`
+                  : ""
+              }
+              <div><b>${label}.</b> ${safeAddress}</div>
+          </div>
+       `;
+    const bubble = new window.H.ui.InfoBubble(marker.getGeometry(), {
+      content: content,
+    });
+    uiRef.current.addBubble(bubble);
+  };
 
   // Initialize Map
   useEffect(() => {
@@ -45,7 +89,7 @@ const HereMap: React.FC<HereMapProps> = ({
         center: userLocation || { lat: 50, lng: 5 },
         zoom: 4,
         pixelRatio: window.devicePixelRatio || 1,
-      },
+      }
     );
 
     // Interactive behavior
@@ -89,7 +133,7 @@ const HereMap: React.FC<HereMapProps> = ({
     if (userLocation) {
       const userIcon = new window.H.map.Icon(
         `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#2563eb" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`,
-        { size: { w: 24, h: 24 }, anchor: { x: 12, y: 12 } },
+        { size: { w: 24, h: 24 }, anchor: { x: 12, y: 12 } }
       );
       const userMarker = new window.H.map.Marker(userLocation, {
         icon: userIcon,
@@ -114,19 +158,11 @@ const HereMap: React.FC<HereMapProps> = ({
           anchor: { x: 15, y: 36 },
         });
         const marker = new window.H.map.Marker(addr.location, { icon });
+        marker.setData({ id: addr.id });
 
         // Add bubble
-        marker.addEventListener("tap", (evt: any) => {
-          const content = `
-                <div class="p-2 text-sm">
-                    ${addr.name ? `<div class="font-bold text-base mb-1">${addr.name}</div>` : ""}
-                    <div><b>${label}.</b> ${addr.formattedAddress || addr.originalText}</div>
-                </div>
-             `;
-          const bubble = new window.H.ui.InfoBubble(evt.target.getGeometry(), {
-            content: content,
-          });
-          uiRef.current.addBubble(bubble);
+        marker.addEventListener("tap", () => {
+          showBubble(addr, marker);
         });
 
         group.addObject(marker);
@@ -139,6 +175,33 @@ const HereMap: React.FC<HereMapProps> = ({
       });
     }
   }, [addresses, userLocation]);
+
+  // Handle Focus Address
+  useEffect(() => {
+    if (!hMapRef.current || !focusedAddressId || !groupRef.current) return;
+
+    const targetAddr = addresses.find((a) => a.id === focusedAddressId);
+    if (targetAddr && targetAddr.location) {
+      // Zoom
+      hMapRef.current.getViewModel().setLookAtData(
+        {
+          position: targetAddr.location,
+          zoom: 16,
+        },
+        true // animate
+      );
+
+      // Show Bubble
+      const markers = groupRef.current.getObjects();
+      const targetMarker = markers.find(
+        (m: any) => m.getData()?.id === focusedAddressId
+      );
+
+      if (targetMarker) {
+        showBubble(targetAddr, targetMarker);
+      }
+    }
+  }, [focusedAddressId, addresses]);
 
   // Update Route Polyline
   useEffect(() => {
