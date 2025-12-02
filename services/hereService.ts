@@ -1,5 +1,39 @@
 import { GeoPoint, Address } from "../types";
 
+// HERE API Response Types
+interface HereWaypoint {
+  id: string;
+  sequence: number;
+}
+
+interface HereRouteSection {
+  polyline: string;
+}
+
+interface HereGeocodeResponse {
+  items?: Array<{
+    position: GeoPoint;
+    address: { label: string };
+  }>;
+}
+
+interface HereSequenceResponse {
+  results?: Array<{
+    waypoints: HereWaypoint[];
+  }>;
+}
+
+interface HereRoutingResponse {
+  routes?: Array<{
+    sections: HereRouteSection[];
+  }>;
+}
+
+type HereApiResponse =
+  | HereGeocodeResponse
+  | HereSequenceResponse
+  | HereRoutingResponse;
+
 const GEOCODE_URL = "https://geocode.search.hereapi.com/v1/geocode";
 const SEQUENCE_URL = "https://wps.hereapi.com/v8/findsequence2";
 const ROUTING_URL = "https://router.hereapi.com/v8/routes";
@@ -55,7 +89,10 @@ function addToCache(
   }
 }
 
-async function fetchWithChecks(url: string, apiName: string): Promise<any> {
+async function fetchWithChecks(
+  url: string,
+  apiName: string,
+): Promise<HereApiResponse> {
   let response;
   try {
     response = await fetch(url);
@@ -113,7 +150,10 @@ export const geocodeAddress = async (
       url.searchParams.append("at", `${userLocation.lat},${userLocation.lng}`);
     }
 
-    const data = await fetchWithChecks(url.toString(), "Geocoding");
+    const data = (await fetchWithChecks(
+      url.toString(),
+      "Geocoding",
+    )) as HereGeocodeResponse;
 
     if (data.items && data.items.length > 0) {
       const result = {
@@ -127,8 +167,8 @@ export const geocodeAddress = async (
       return result;
     }
     return null;
-  } catch (e: any) {
-    if (e.message && e.message.includes("Rate limit")) throw e;
+  } catch (e: unknown) {
+    if (e instanceof Error && e.message.includes("Rate limit")) throw e;
     console.error("Geocoding error", e);
     return null;
   }
@@ -156,13 +196,16 @@ export const calculateOptimalSequence = async (
     }
   });
 
-  const data = await fetchWithChecks(url.toString(), "Waypoint Sequence");
+  const data = (await fetchWithChecks(
+    url.toString(),
+    "Waypoint Sequence",
+  )) as HereSequenceResponse;
 
   if (data.results && data.results[0] && data.results[0].waypoints) {
     const waypoints = data.results[0].waypoints;
     const sorted: Address[] = [];
 
-    waypoints.forEach((wp: any) => {
+    waypoints.forEach((wp: HereWaypoint) => {
       if (wp.id === "start") return;
       const original = validDestinations.find((d) => d.id === wp.id);
       if (original) {
@@ -207,10 +250,13 @@ export const getRouteShape = async (
 
     v8Url.searchParams.append("return", "polyline");
 
-    const d = await fetchWithChecks(v8Url.toString(), "Routing V8");
+    const d = (await fetchWithChecks(
+      v8Url.toString(),
+      "Routing V8",
+    )) as HereRoutingResponse;
 
     if (d.routes && d.routes.length > 0) {
-      return d.routes[0].sections.map((s: any) => s.polyline);
+      return d.routes[0].sections.map((s: HereRouteSection) => s.polyline);
     }
   }
   return [];

@@ -7,7 +7,26 @@ const SCOPES = "https://www.googleapis.com/auth/drive.file";
 const DISCOVERY_DOC =
   "https://sheets.googleapis.com/$discovery/rest?version=v4";
 
-let tokenClient: any;
+// Google API Response Types
+interface TokenResponse {
+  error?: string;
+  access_token: string;
+  expires_in?: number;
+}
+
+interface SheetMetadata {
+  properties: {
+    sheetId: number;
+    title: string;
+  };
+}
+
+interface TokenClientType {
+  callback?: (response: TokenResponse) => void;
+  requestAccessToken: (options: { prompt: string }) => void;
+}
+
+let tokenClient: TokenClientType | null = null;
 
 export const loadGoogleModules = (
   apiKey: string,
@@ -69,7 +88,7 @@ export const getAccessToken = (): Promise<string> => {
 
     if (!tokenClient) return reject("Google Identity Services not initialized");
 
-    tokenClient.callback = (resp: any) => {
+    tokenClient.callback = (resp: TokenResponse) => {
       if (resp.error !== undefined) {
         reject(resp);
       }
@@ -98,13 +117,17 @@ export const openGooglePicker = (
       return reject("Google Picker API not loaded");
     }
 
-    const pickerCallback = (data: any) => {
+    const pickerCallback = (data: google.picker.ResponseObject) => {
       if (data.action === window.google.picker.Action.PICKED) {
-        const doc = data.docs[0];
-        resolve({
-          id: doc.id,
-          name: doc.name,
-        });
+        const doc = data.docs?.[0];
+        if (doc) {
+          resolve({
+            id: doc.id,
+            name: doc.name || "",
+          });
+        } else {
+          resolve(null);
+        }
       } else if (data.action === window.google.picker.Action.CANCEL) {
         resolve(null);
       }
@@ -138,7 +161,7 @@ export const fetchSheetMetadata = async (
       spreadsheetId: spreadsheetId,
     });
 
-    return meta.result.sheets.map((s: any) => ({
+    return meta.result.sheets.map((s: SheetMetadata) => ({
       id: s.properties.sheetId,
       title: s.properties.title,
     }));

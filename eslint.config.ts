@@ -15,12 +15,6 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   reactHooks.configs.flat.recommended,
   {
-    rules: {
-      // TODO: Remove after fixing violations
-      "@typescript-eslint/no-explicit-any": "off",
-    },
-  },
-  {
     plugins: {
       react,
     },

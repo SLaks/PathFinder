@@ -1,5 +1,29 @@
 declare namespace gapi.client.sheets {
-  const spreadsheets: any;
+  interface SpreadsheetsResource {
+    get(params: { spreadsheetId: string }): Promise<{
+      result: {
+        sheets: Array<{
+          properties: {
+            sheetId: number;
+            title: string;
+          };
+        }>;
+      };
+    }>;
+    values: {
+      get(params: {
+        spreadsheetId: string;
+        range: string;
+      }): Promise<{ result: { values?: string[][] } }>;
+      update(params: {
+        spreadsheetId: string;
+        range: string;
+        valueInputOption: string;
+        resource: { values: Array<Array<string | boolean | number>> };
+      }): Promise<unknown>;
+    };
+  }
+  const spreadsheets: SpreadsheetsResource;
 }
 
 // From https://github.com/TeemuKoivisto/google-oauth-drive-example/blob/a0fdb2d04b2e4f4c49777abfeed4dcdcf8077259/packages/client/src/google.d.ts

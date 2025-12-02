@@ -73,8 +73,9 @@ const App: React.FC = () => {
             return updated || a;
           }),
         );
-      } catch (e: any) {
-        alert(e.message);
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "An error occurred";
+        alert(message);
       } finally {
         setIsGeocoding(false);
       }
@@ -104,12 +105,13 @@ const App: React.FC = () => {
 
       // Switch to map view on mobile so user can see result
       setMobileTab("map");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Optimization failed", error);
-      alert(
-        error.message ||
-          "Could not optimize route. Please check your API Key and try again.",
-      );
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Could not optimize route. Please check your API Key and try again.";
+      alert(errorMessage);
     } finally {
       setIsOptimizing(false);
     }

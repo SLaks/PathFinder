@@ -68,9 +68,9 @@ export async function geocodeAddresses(
         formattedAddress: result?.address,
         isGeocoding: false,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       // If rate limit error, propagate it to stop processing
-      if (err.message && err.message.includes("Rate limit")) {
+      if (err instanceof Error && err.message.includes("Rate limit")) {
         throw err;
       }
 
