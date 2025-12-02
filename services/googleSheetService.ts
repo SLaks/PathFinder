@@ -148,10 +148,15 @@ export const fetchSheetMetadata = async (
   }
 };
 
-export const fetchSheetRows = async (
+export interface SheetData {
+  headers: string[];
+  rows: string[][];
+}
+
+export const fetchSheetData = async (
   spreadsheetId: string,
   sheetTitle?: string
-): Promise<string[]> => {
+): Promise<SheetData> => {
   try {
     let rangeName = "";
 
@@ -168,18 +173,45 @@ export const fetchSheetRows = async (
     // 2. Get values from the sheet
     const response = await window.gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId: spreadsheetId,
-      range: `${rangeName}!A1:Z100`, // Grab a reasonable chunk
+      range: `${rangeName}!A1:Z1000`, // Grab a reasonable chunk, increased to 1000
     });
 
-    const rows = response.result.values;
-    if (!rows || rows.length === 0) {
-      return [];
+    const values = response.result.values;
+    if (!values || values.length === 0) {
+      return { headers: [], rows: [] };
     }
 
-    // Convert rows to pipe-delimited strings for the Gemini parser
-    return rows.map((row: any[]) => row.join(" | "));
+    const headers = values[0];
+    const rows = values.slice(1);
+
+    return { headers, rows };
   } catch (error) {
     console.error("Error fetching sheet data:", error);
+    throw error;
+  }
+};
+
+export const updateSheetCell = async (
+  spreadsheetId: string,
+  sheetTitle: string,
+  rowIndex: number, // 1-based index
+  colIndex: number, // 0-based index (A=0, B=1, etc.)
+  value: string | boolean | number
+): Promise<void> => {
+  try {
+    const colLetter = String.fromCharCode(65 + colIndex); // Simple A-Z conversion. TODO: Handle AA, AB etc if needed
+    const range = `${sheetTitle}!${colLetter}${rowIndex}`;
+
+    await window.gapi.client.sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range,
+      valueInputOption: "USER_ENTERED",
+      resource: {
+        values: [[value]],
+      },
+    });
+  } catch (error) {
+    console.error("Error updating sheet cell:", error);
     throw error;
   }
 };

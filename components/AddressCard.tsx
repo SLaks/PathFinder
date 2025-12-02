@@ -12,6 +12,7 @@ interface AddressCardProps {
   className?: string;
   isCompact?: boolean; // For map bubble
   disabled?: boolean;
+  onToggleComplete?: (completed: boolean) => void;
 }
 
 export const AddressCard: React.FC<AddressCardProps> = ({
@@ -23,6 +24,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   className = "",
   isCompact = false,
   disabled = false,
+  onToggleComplete,
 }) => {
   const color = getAddressColor(index);
   const initials = getInitials(address.name || address.originalText);
@@ -62,6 +64,22 @@ export const AddressCard: React.FC<AddressCardProps> = ({
       onMouseEnter={!disabled ? onMouseEnter : undefined}
       onMouseLeave={!disabled ? onMouseLeave : undefined}
     >
+      {/* Checkbox for status */}
+      {!isCompact && onToggleComplete && (
+        <div
+          className="flex-shrink-0 pt-1"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={!!address.completed}
+            onChange={(e) => onToggleComplete(e.target.checked)}
+            disabled={disabled}
+            className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+          />
+        </div>
+      )}
+
       {/* Avatar / Initials */}
       <div className="flex-shrink-0 flex flex-col items-center gap-1">
         <div
@@ -93,8 +111,12 @@ export const AddressCard: React.FC<AddressCardProps> = ({
             initials
           )}
         </div>
-        <span className="text-xs font-bold text-gray-400">
-          #{address.sequenceOrder ?? index + 1}
+        <span
+          className={`text-xs font-bold ${
+            address.completed ? "text-green-500" : "text-gray-500"
+          }`}
+        >
+          {address.completed ? "✓" : `#${address.sequenceOrder ?? index + 1}`}
         </span>
       </div>
 

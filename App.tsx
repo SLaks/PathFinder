@@ -137,15 +137,18 @@ const App: React.FC = () => {
 
     try {
       // 1. Solve TSP
+      const activeAddresses = addresses.filter((a) => !a.completed);
+      const completedAddresses = addresses.filter((a) => a.completed);
+
       const { sortedAddresses } = await calculateOptimalSequence(
         userLocation,
-        addresses,
-        apiKey,
+        activeAddresses,
+        apiKey
       );
 
       // 2. Update state with sorted order
-      // We replace the list with the sorted one
-      setAddresses(sortedAddresses);
+      // We replace the list with the sorted one, appending completed ones at the end
+      setAddresses([...sortedAddresses, ...completedAddresses]);
 
       // 3. Get route shape (polyline)
       const shape = await getRouteShape(userLocation, sortedAddresses, apiKey);

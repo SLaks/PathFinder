@@ -11,6 +11,8 @@ export interface Address {
   formattedAddress?: string;
   sequenceOrder?: number; // For TSP result
   isGeocoding?: boolean;
+  sheetRow?: number; // 1-based row index in the sheet
+  completed?: boolean;
 }
 
 export interface RouteSummary {

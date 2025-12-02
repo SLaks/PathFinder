@@ -5,7 +5,8 @@ import {
   loadGoogleModules,
   getAccessToken,
   openGooglePicker,
-  fetchSheetRows,
+  fetchSheetData,
+  updateSheetCell,
   fetchSheetMetadata,
   SheetInfo,
 } from "../services/googleSheetService";
@@ -51,6 +52,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Google Sheets State
   const [sheetConfig, setSheetConfig] = useState<SheetConfig | null>(null);
+  const [statusColumnIndex, setStatusColumnIndex] = useState<number | null>(
+    null
+  );
   const [isSyncing, setIsSyncing] = useState(false);
   const isBusy =
     isOptimizing ||
@@ -156,9 +160,99 @@ const Sidebar: React.FC<SidebarProps> = ({
       // 4. Fetch Data
       if (targetSheetId) {
         // If syncing existing config, use its sheetTitle
-        const rows = await fetchSheetRows(targetSheetId, targetSheetTitle);
-        const rawText = rows.join("\n");
-        await processTextData(rawText);
+        const { headers, rows } = await fetchSheetData(
+          targetSheetId,
+          targetSheetTitle
+        );
+
+        // Find "Delivered" or "Status" column
+        let statusColIdx = -1;
+        const statusKeywords = [
+          "delivered",
+          "done",
+          "completed",
+          "status",
+          "complete",
+        ];
+
+        // Check headers first
+        if (headers) {
+          statusColIdx = headers.findIndex((h) =>
+            statusKeywords.includes(h.toLowerCase().trim())
+          );
+        }
+
+        setStatusColumnIndex(statusColIdx);
+
+        // Prepare text for Gemini
+        // We'll join all columns for parsing, but keep track of raw rows
+        const rawText = rows.map((r) => r.join(" | ")).join("\n");
+
+        // Parse with Gemini
+        setImportStatus(ImportStatus.PARSING);
+        const parsedItems = await parseAddressesWithGemini(rawText);
+
+        // Map back to rows
+        // Strategy: Fuzzy match or just assume order if Gemini preserves it?
+        // Gemini might filter or reorder.
+        // Better strategy: We know the input text order matches the rows (mostly).
+        // But Gemini output is a list of extracted addresses.
+        // Let's try to find the address string in the row content.
+
+        const newAddresses: Address[] = [];
+        const usedRows = new Set<number>();
+
+        parsedItems.forEach((item) => {
+          // Find matching row
+          // We search through rows to find one that contains the address text
+          // AND hasn't been used yet.
+          let bestRowIdx = -1;
+
+          // Simple inclusion check
+          // We iterate all rows to find the best match
+          // This is O(N*M), might be slow for huge sheets but fine for <1000 rows
+          for (let i = 0; i < rows.length; i++) {
+            if (usedRows.has(i)) continue;
+
+            const rowStr = rows[i].join(" ").toLowerCase();
+            // Check if address part is in row
+            // This is a bit loose.
+            if (rowStr.includes(item.address.toLowerCase().split(",")[0])) {
+              bestRowIdx = i;
+              break;
+            }
+          }
+
+          let isCompleted = false;
+          if (bestRowIdx !== -1) {
+            usedRows.add(bestRowIdx);
+            // Check status column
+            if (statusColIdx !== -1 && rows[bestRowIdx][statusColIdx]) {
+              const statusVal = rows[bestRowIdx][statusColIdx].toLowerCase();
+              isCompleted = [
+                "yes",
+                "true",
+                "done",
+                "completed",
+                "x",
+                "1",
+              ].includes(statusVal);
+            }
+          }
+
+          newAddresses.push({
+            id: Math.random().toString(36).substr(2, 9),
+            originalText: item.address,
+            name: item.name,
+            isGeocoding: true,
+            sheetRow: bestRowIdx !== -1 ? bestRowIdx + 2 : undefined, // +2 because 1-based and header is row 1
+            completed: isCompleted,
+          });
+        });
+
+        setAddresses(newAddresses);
+        setImportStatus(ImportStatus.SUCCESS);
+        setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
       }
     } catch (error) {
       console.error("Google Sheet Error:", error);
@@ -187,9 +281,77 @@ const Sidebar: React.FC<SidebarProps> = ({
       setSheetConfig(newConfig);
       localStorage.setItem(STORAGE_SHEET_CONFIG, JSON.stringify(newConfig));
 
-      const rows = await fetchSheetRows(pendingSpreadsheetId, sheet.title);
-      const rawText = rows.join("\n");
-      await processTextData(rawText);
+      const { headers, rows } = await fetchSheetData(
+        pendingSpreadsheetId,
+        sheet.title
+      );
+
+      // Find "Delivered" or "Status" column
+      let statusColIdx = -1;
+      const statusKeywords = [
+        "delivered",
+        "done",
+        "completed",
+        "status",
+        "complete",
+      ];
+
+      if (headers) {
+        statusColIdx = headers.findIndex((h) =>
+          statusKeywords.includes(h.toLowerCase().trim())
+        );
+      }
+      setStatusColumnIndex(statusColIdx);
+
+      const rawText = rows.map((r) => r.join(" | ")).join("\n");
+
+      // Duplicate logic from above - should refactor but inline for now to save tool calls
+      setImportStatus(ImportStatus.PARSING);
+      const parsedItems = await parseAddressesWithGemini(rawText);
+
+      const newAddresses: Address[] = [];
+      const usedRows = new Set<number>();
+
+      parsedItems.forEach((item) => {
+        let bestRowIdx = -1;
+        for (let i = 0; i < rows.length; i++) {
+          if (usedRows.has(i)) continue;
+          const rowStr = rows[i].join(" ").toLowerCase();
+          if (rowStr.includes(item.address.toLowerCase().split(",")[0])) {
+            bestRowIdx = i;
+            break;
+          }
+        }
+
+        let isCompleted = false;
+        if (bestRowIdx !== -1) {
+          usedRows.add(bestRowIdx);
+          if (statusColIdx !== -1 && rows[bestRowIdx][statusColIdx]) {
+            const statusVal = rows[bestRowIdx][statusColIdx].toLowerCase();
+            isCompleted = [
+              "yes",
+              "true",
+              "done",
+              "completed",
+              "x",
+              "1",
+            ].includes(statusVal);
+          }
+        }
+
+        newAddresses.push({
+          id: Math.random().toString(36).substr(2, 9),
+          originalText: item.address,
+          name: item.name,
+          isGeocoding: true,
+          sheetRow: bestRowIdx !== -1 ? bestRowIdx + 2 : undefined,
+          completed: isCompleted,
+        });
+      });
+
+      setAddresses(newAddresses);
+      setImportStatus(ImportStatus.SUCCESS);
+      setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
     } catch (error) {
       console.error("Error selecting sheet:", error);
       alert("Failed to load selected sheet.");
@@ -204,6 +366,41 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (!nextStop.location) return "#";
     return `https://www.google.com/maps/dir/?api=1&destination=${nextStop.location.lat},${nextStop.location.lng}&travelmode=driving`;
   };
+
+  const handleToggleComplete = async (id: string, completed: boolean) => {
+    // 1. Update local state
+    setAddresses((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, completed } : a))
+    );
+
+    // 2. Update Google Sheet if linked
+    const addr = addresses.find((a) => a.id === id);
+    if (
+      addr &&
+      addr.sheetRow &&
+      sheetConfig &&
+      statusColumnIndex !== null &&
+      statusColumnIndex !== -1
+    ) {
+      try {
+        await updateSheetCell(
+          sheetConfig.spreadsheetId,
+          sheetConfig.sheetTitle || "Sheet1",
+          addr.sheetRow,
+          statusColumnIndex,
+          completed ? "TRUE" : "FALSE"
+        );
+      } catch (e) {
+        console.error("Failed to update sheet", e);
+        // Revert local state on failure? Or just alert?
+        // For now, just log.
+      }
+    }
+  };
+
+  // Split addresses into pending and completed
+  const pendingAddresses = addresses.filter((a) => !a.completed);
+  const completedAddresses = addresses.filter((a) => a.completed);
 
   return (
     <div className="w-full bg-white border-r border-gray-200 flex flex-col h-full shadow-xl z-10 relative">
@@ -365,7 +562,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <p className="text-gray-400 text-sm">No addresses added yet.</p>
               </div>
             )}
-            {addresses.map((addr, idx) => (
+
+            {/* Pending Addresses */}
+            {pendingAddresses.map((addr, idx) => (
               <AddressCard
                 key={addr.id}
                 address={addr}
@@ -375,8 +574,37 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onMouseLeave={() => onHoverAddress(null)}
                 className="p-3"
                 disabled={isBusy}
+                onToggleComplete={(val) => handleToggleComplete(addr.id, val)}
               />
             ))}
+
+            {/* Completed Addresses */}
+            {completedAddresses.length > 0 && (
+              <>
+                <div className="border-t border-gray-200 my-4 pt-2">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Completed
+                  </h3>
+                </div>
+                <div className="opacity-60 grayscale">
+                  {completedAddresses.map((addr, idx) => (
+                    <AddressCard
+                      key={addr.id}
+                      address={addr}
+                      index={idx + pendingAddresses.length} // Keep index continuous? Or just hide index for completed?
+                      onClick={() => onFocusAddress(addr.id)}
+                      onMouseEnter={() => onHoverAddress(addr.id)}
+                      onMouseLeave={() => onHoverAddress(null)}
+                      className="p-3"
+                      disabled={isBusy}
+                      onToggleComplete={(val) =>
+                        handleToggleComplete(addr.id, val)
+                      }
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

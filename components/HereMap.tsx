@@ -137,8 +137,9 @@ const HereMap: React.FC<HereMapProps> = ({
       if (addr.location) {
         const color = getAddressColor(index);
         const initials = getInitials(addr.name || addr.originalText);
+        const opacity = addr.completed ? 0.4 : 1.0;
 
-        const svgMarkup = `<svg width="30" height="36" xmlns="http://www.w3.org/2000/svg">
+        const svgMarkup = `<svg width="30" height="36" xmlns="http://www.w3.org/2000/svg" opacity="${opacity}">
           <path d="M15 0C6.7 0 0 6.7 0 15c0 10 15 21 15 21s15-11 15-21c0-8.3-6.7-15-15-15z" fill="${color}" stroke="white" stroke-width="2"/>
           <text x="15" y="21" font-size="12" font-family="Arial" font-weight="bold" text-anchor="middle" fill="white">${initials}</text>
         </svg>`;
