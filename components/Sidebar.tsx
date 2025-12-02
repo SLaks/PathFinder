@@ -1,18 +1,20 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Address, GeoPoint, ImportStatus, SheetConfig } from "../types";
+import { parseAddressesFromText } from "../services/addressService";
 import {
-  parseAddressesWithGemini,
-  identifyColumnsWithGemini,
-} from "../services/geminiService";
+  getSheetConfig,
+  setSheetConfig as saveSheetConfig,
+} from "../services/storageService";
 import {
-  loadGoogleModules,
-  getAccessToken,
-  openGooglePicker,
-  fetchSheetData,
-  updateSheetCell,
-  fetchSheetMetadata,
-  SheetInfo,
-} from "../services/googleSheetService";
+  initializeGoogleSheets,
+  pickSheet,
+  syncSheetData,
+  updateSheetStatus,
+  selectAndSyncSheet,
+  SheetPickerResult,
+} from "../services/sheetIntegrationService";
+import { SheetInfo } from "../services/googleSheetService";
+import { createGoogleMapsNavigationLink } from "../services/routeService";
 import { AddressCard } from "./AddressCard";
 
 interface SidebarProps {
@@ -26,16 +28,6 @@ interface SidebarProps {
   onFocusAddress: (id: string) => void;
   onHoverAddress: (id: string | null) => void;
 }
-
-const STORAGE_SHEET_CONFIG = "routeoptima_sheet_config";
-
-// Hardcoded Google Credentials
-const GOOGLE_CLIENT_ID =
-  "377676797720-gue2trd92glfihma88lsm813je9u51al.apps.googleusercontent.com";
-// Note: The user provided a Client Secret. In a typical Google JS Client setup,
-// an API Key (starting with AIza) is expected for the 'apiKey' field in gapi.client.init
-// and picker builder.
-const GOOGLE_API_KEY = "AIzaSyChd3QUP4K-8psCmCh8RzKnqJ6Vwrys44M";
 
 const Sidebar: React.FC<SidebarProps> = ({
   addresses,
@@ -78,21 +70,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Load saved configs on mount
   useEffect(() => {
-    const savedSheet = localStorage.getItem(STORAGE_SHEET_CONFIG);
-    if (savedSheet) setSheetConfig(JSON.parse(savedSheet));
+    const savedSheet = getSheetConfig();
+    if (savedSheet) setSheetConfig(savedSheet);
   }, []);
 
   const processTextData = useCallback(
     async (text: string) => {
       setImportStatus(ImportStatus.PARSING);
       try {
-        const parsed = await parseAddressesWithGemini(text);
-        const newAddresses: Address[] = parsed.map((item) => ({
-          id: Math.random().toString(36).substr(2, 9),
-          originalText: item.address,
-          name: item.name,
-          isGeocoding: true,
-        }));
+        const newAddresses = await parseAddressesFromText(text);
         setAddresses(newAddresses);
         setImportStatus(ImportStatus.SUCCESS);
 
@@ -114,130 +100,55 @@ const Sidebar: React.FC<SidebarProps> = ({
   const handleGoogleAction = async (action: "PICK" | "SYNC") => {
     setIsSyncing(true);
     try {
-      // 1. Initialize Google Libraries with hardcoded creds
-      await loadGoogleModules(GOOGLE_API_KEY, GOOGLE_CLIENT_ID);
+      // Initialize and authenticate
+      const token = await initializeGoogleSheets();
 
-      // 2. Get Access Token
-      const token = await getAccessToken();
+      let targetConfig = sheetConfig;
 
-      let targetSheetId = sheetConfig?.spreadsheetId;
-      let targetSheetName = sheetConfig?.spreadsheetName;
-      let targetSheetTitle = sheetConfig?.sheetTitle;
-      let targetMapping = sheetConfig?.columnMapping;
+      // Pick file if needed
+      if (action === "PICK" || !targetConfig) {
+        const pickerResult: SheetPickerResult = await pickSheet(token);
 
-      // 3. Pick File if needed
-      if (action === "PICK" || !targetSheetId) {
-        const file = await openGooglePicker(token, GOOGLE_API_KEY);
-        if (!file) {
-          setIsSyncing(false);
-          return; // User cancelled
-        }
-        targetSheetId = file.id;
-        targetSheetName = file.name;
-
-        // Fetch sheets to see if we need to ask user
-        const sheets = await fetchSheetMetadata(targetSheetId);
-
-        if (sheets.length > 1) {
-          setSheetSelection({
-            isOpen: true,
-            sheets,
-            pendingSpreadsheetId: targetSheetId,
-            pendingSpreadsheetName: targetSheetName,
-          });
-          setIsSyncing(false);
-          return; // Stop here, wait for user selection
-        }
-
-        // Default to first sheet
-        targetSheetTitle = sheets[0].title;
-        // Reset mapping on new sheet pick
-        targetMapping = undefined;
-
-        const newConfig: SheetConfig = {
-          spreadsheetId: targetSheetId,
-          spreadsheetName: targetSheetName,
-          sheetId: sheets[0].id,
-          sheetTitle: targetSheetTitle,
-        };
-        setSheetConfig(newConfig);
-        localStorage.setItem(STORAGE_SHEET_CONFIG, JSON.stringify(newConfig));
-      }
-
-      // 4. Fetch Data
-      if (targetSheetId) {
-        // If syncing existing config, use its sheetTitle
-        const { headers, rows } = await fetchSheetData(
-          targetSheetId,
-          targetSheetTitle
-        );
-
-        if (!headers || headers.length === 0) {
-          alert("Sheet is empty or missing headers.");
+        if (!pickerResult.spreadsheetId) {
+          // User cancelled
           setIsSyncing(false);
           return;
         }
 
-        // 5. Identify Columns (if not cached)
-        if (!targetMapping) {
-          setImportStatus(ImportStatus.PARSING);
-          // Use the first row as sample
-          const sampleRow = rows.length > 0 ? rows[0] : [];
-          targetMapping = await identifyColumnsWithGemini(headers, sampleRow);
-
-          // Save mapping
-          const updatedConfig: SheetConfig = {
-            spreadsheetId: targetSheetId,
-            spreadsheetName: targetSheetName!,
-            sheetTitle: targetSheetTitle,
-            columnMapping: targetMapping,
-          };
-          setSheetConfig(updatedConfig);
-          localStorage.setItem(
-            STORAGE_SHEET_CONFIG,
-            JSON.stringify(updatedConfig)
-          );
-        }
-
-        // 6. Parse Data using Mapping
-        if (targetMapping) {
-          setStatusColumnIndex(targetMapping.statusColumnIndex ?? null);
-
-          const newAddresses: Address[] = [];
-
-          rows.forEach((row, rowIndex) => {
-            // Concatenate address parts
-            const addressParts = targetMapping!.addressColumnIndices.map(idx => row[idx]).filter(Boolean);
-            const addressText = addressParts.join(" ");
-            
-            if (!addressText.trim()) return; // Skip empty addresses
-
-            // Concatenate name parts
-            const nameParts = targetMapping!.nameColumnIndices
-                ? targetMapping!.nameColumnIndices.map(idx => row[idx]).filter(Boolean)
-                : [];
-            const nameText = nameParts.length > 0 ? nameParts.join(" ") : undefined;
-            
-            let isCompleted = false;
-            if (targetMapping!.statusColumnIndex !== undefined) {
-               const statusVal = row[targetMapping!.statusColumnIndex]?.toLowerCase() || "";
-               isCompleted = ["yes", "true", "done", "completed", "x", "1"].includes(statusVal);
-            }
-
-            newAddresses.push({
-              id: Math.random().toString(36).substr(2, 9),
-              originalText: addressText,
-              name: nameText,
-              isGeocoding: true,
-              sheetRow: rowIndex + 2, // +2 because 1-based and header is row 1
-              completed: isCompleted,
-            });
+        if (pickerResult.requiresSheetSelection && pickerResult.sheets) {
+          // Multiple sheets - show selection dialog
+          setSheetSelection({
+            isOpen: true,
+            sheets: pickerResult.sheets,
+            pendingSpreadsheetId: pickerResult.spreadsheetId,
+            pendingSpreadsheetName: pickerResult.spreadsheetName || "",
           });
-
-          setAddresses(newAddresses);
-          setImportStatus(ImportStatus.SUCCESS);
-          setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
+          setIsSyncing(false);
+          return;
         }
+
+        // Single sheet - create config
+        const sheet = pickerResult.sheets![0];
+        targetConfig = {
+          spreadsheetId: pickerResult.spreadsheetId,
+          spreadsheetName: pickerResult.spreadsheetName || "",
+          sheetId: sheet.id,
+          sheetTitle: sheet.title,
+        };
+        setSheetConfig(targetConfig);
+        saveSheetConfig(targetConfig);
+      }
+
+      // Sync data
+      if (targetConfig) {
+        setImportStatus(ImportStatus.PARSING);
+        const result = await syncSheetData(targetConfig);
+
+        setAddresses(result.addresses);
+        setSheetConfig(result.config);
+        setStatusColumnIndex(result.statusColumnIndex);
+        setImportStatus(ImportStatus.SUCCESS);
+        setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
       }
     } catch (error) {
       console.error("Google Sheet Error:", error);
@@ -257,90 +168,22 @@ const Sidebar: React.FC<SidebarProps> = ({
     try {
       const { pendingSpreadsheetId, pendingSpreadsheetName } = sheetSelection;
 
-      const newConfig: SheetConfig = {
-        spreadsheetId: pendingSpreadsheetId,
-        spreadsheetName: pendingSpreadsheetName,
-        sheetId: sheet.id,
-        sheetTitle: sheet.title,
-      };
-
-      setSheetConfig(newConfig);
-      localStorage.setItem(STORAGE_SHEET_CONFIG, JSON.stringify(newConfig));
-
-      const { headers, rows } = await fetchSheetData(
+      setImportStatus(ImportStatus.PARSING);
+      const result = await selectAndSyncSheet(
         pendingSpreadsheetId,
-        sheet.title
+        pendingSpreadsheetName,
+        sheet
       );
 
-      // Find "Delivered" or "Status" column
-      let statusColIdx = -1;
-      const statusKeywords = [
-        "delivered",
-        "done",
-        "completed",
-        "status",
-        "complete",
-      ];
-
-      if (headers) {
-        statusColIdx = headers.findIndex((h) =>
-          statusKeywords.includes(h.toLowerCase().trim())
-        );
-      }
-      setStatusColumnIndex(statusColIdx);
-
-      const rawText = rows.map((r) => r.join(" | ")).join("\n");
-
-      // Duplicate logic from above - should refactor but inline for now to save tool calls
-      setImportStatus(ImportStatus.PARSING);
-      const parsedItems = await parseAddressesWithGemini(rawText);
-
-      const newAddresses: Address[] = [];
-      const usedRows = new Set<number>();
-
-      parsedItems.forEach((item) => {
-        let bestRowIdx = -1;
-        for (let i = 0; i < rows.length; i++) {
-          if (usedRows.has(i)) continue;
-          const rowStr = rows[i].join(" ").toLowerCase();
-          if (rowStr.includes(item.address.toLowerCase().split(",")[0])) {
-            bestRowIdx = i;
-            break;
-          }
-        }
-
-        let isCompleted = false;
-        if (bestRowIdx !== -1) {
-          usedRows.add(bestRowIdx);
-          if (statusColIdx !== -1 && rows[bestRowIdx][statusColIdx]) {
-            const statusVal = rows[bestRowIdx][statusColIdx].toLowerCase();
-            isCompleted = [
-              "yes",
-              "true",
-              "done",
-              "completed",
-              "x",
-              "1",
-            ].includes(statusVal);
-          }
-        }
-
-        newAddresses.push({
-          id: Math.random().toString(36).substr(2, 9),
-          originalText: item.address,
-          name: item.name,
-          isGeocoding: true,
-          sheetRow: bestRowIdx !== -1 ? bestRowIdx + 2 : undefined,
-          completed: isCompleted,
-        });
-      });
-
-      setAddresses(newAddresses);
+      setAddresses(result.addresses);
+      setSheetConfig(result.config);
+      setStatusColumnIndex(result.statusColumnIndex);
       setImportStatus(ImportStatus.SUCCESS);
       setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
     } catch (error) {
       console.error("Error selecting sheet:", error);
       alert("Failed to load selected sheet.");
+      setImportStatus(ImportStatus.ERROR);
     } finally {
       setIsSyncing(false);
     }
@@ -349,8 +192,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const getGoogleMapsLink = () => {
     if (!addresses.length) return "#";
     const nextStop = addresses[0];
-    if (!nextStop.location) return "#";
-    return `https://www.google.com/maps/dir/?api=1&destination=${nextStop.location.lat},${nextStop.location.lng}&travelmode=driving`;
+    return createGoogleMapsNavigationLink(nextStop);
   };
 
   const handleToggleComplete = async (id: string, completed: boolean) => {
@@ -369,12 +211,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       statusColumnIndex !== -1
     ) {
       try {
-        await updateSheetCell(
-          sheetConfig.spreadsheetId,
-          sheetConfig.sheetTitle || "Sheet1",
+        await updateSheetStatus(
+          sheetConfig,
           addr.sheetRow,
           statusColumnIndex,
-          completed ? "TRUE" : "FALSE"
+          completed
         );
       } catch (e) {
         console.error("Failed to update sheet", e);

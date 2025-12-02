@@ -3,17 +3,18 @@ import HereMap from "./components/HereMap";
 import Sidebar from "./components/Sidebar";
 import { Address, GeoPoint } from "./types";
 import {
-  geocodeAddress,
-  calculateOptimalSequence,
-  getRouteShape,
-  getUserZipCode,
-} from "./services/hereService";
+  getHereApiKey,
+  setHereApiKey as saveHereApiKey,
+  removeHereApiKey,
+} from "./services/storageService";
+import {
+  getUserLocation,
+  reverseGeocode,
+  geocodeAddresses,
+} from "./services/locationService";
+import { optimizeRoute } from "./services/routeService";
+import { separateAddressesByStatus } from "./services/addressService";
 
-const STORAGE_KEY = "here_api_key";
-
-// Default key for demo if user doesn't have one.
-// NOTE: In production, this should be managed via backend or user input.
-// We will prompt user for key.
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>("");
   const [showKeyModal, setShowKeyModal] = useState<boolean>(false);
@@ -31,7 +32,7 @@ const App: React.FC = () => {
 
   // Load API Key from storage
   useEffect(() => {
-    const storedKey = localStorage.getItem(STORAGE_KEY);
+    const storedKey = getHereApiKey();
     if (storedKey) {
       setApiKey(storedKey);
     }
@@ -40,32 +41,25 @@ const App: React.FC = () => {
 
   // Get user location on mount
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-        },
-        (error) => {
-          console.error("Error getting location", error);
-          // alert("Please enable location services for this app to work.");
-        },
-      );
-    }
+    getUserLocation()
+      .then((location) => {
+        setUserLocation(location);
+      })
+      .catch((error) => {
+        console.error("Error getting location", error);
+        // Optionally show a toast/notification instead of alert
+      });
   }, []);
 
   // Fetch User Zip Code for Geocoding Context
   useEffect(() => {
     if (userLocation && apiKey && !userZip) {
-      getUserZipCode(userLocation, apiKey)
+      reverseGeocode(userLocation, apiKey)
         .then((zip) => {
           if (zip) setUserZip(zip);
         })
         .catch((e) => {
-          // alert(e.message); // Suppress alert on zip lookup failure
-          console.warn(e.message);
+          console.warn("Failed to get user zip code", e);
         });
     }
   }, [userLocation, apiKey, userZip]);
@@ -84,42 +78,19 @@ const App: React.FC = () => {
       setIsGeocoding(true);
 
       try {
-        for (const addr of pendingAddresses) {
-          // Address is already marked as loading in the state, so we don't need to update it here.
+        const geocodedAddresses = await geocodeAddresses(
+          pendingAddresses,
+          apiKey,
+          userZip || undefined
+        );
 
-          try {
-            const result = await geocodeAddress(
-              addr.originalText,
-              apiKey,
-              userZip || undefined,
-            );
-
-            setAddresses((prev) =>
-              prev.map((a) =>
-                a.id === addr.id
-                  ? {
-                      ...a,
-                      location: result?.position,
-                      formattedAddress: result?.address,
-                      isGeocoding: false,
-                    }
-                  : a,
-              ),
-            );
-          } catch (err: any) {
-            // Reset loading on individual failure
-            setAddresses((prev) =>
-              prev.map((a) =>
-                a.id === addr.id ? { ...a, isGeocoding: false } : a,
-              ),
-            );
-
-            if (err.message && err.message.includes("Rate limit")) {
-              throw err;
-            }
-            console.error(`Geocoding error for ${addr.originalText}`, err);
-          }
-        }
+        // Update addresses with geocoded results
+        setAddresses((prev) =>
+          prev.map((a) => {
+            const updated = geocodedAddresses.find((ga) => ga.id === a.id);
+            return updated || a;
+          })
+        );
       } catch (e: any) {
         alert(e.message);
       } finally {
@@ -128,7 +99,6 @@ const App: React.FC = () => {
     };
 
     geocodePending();
-     
   }, [addresses, apiKey, userZip, isGeocoding]);
 
   const handleOptimize = async () => {
@@ -136,22 +106,18 @@ const App: React.FC = () => {
     setIsOptimizing(true);
 
     try {
-      // 1. Solve TSP
-      const activeAddresses = addresses.filter((a) => !a.completed);
-      const completedAddresses = addresses.filter((a) => a.completed);
+      // Separate active and completed addresses
+      const { active, completed } = separateAddressesByStatus(addresses);
 
-      const { sortedAddresses } = await calculateOptimalSequence(
+      // Optimize route for active addresses only
+      const { sortedAddresses, routeShape: shape } = await optimizeRoute(
         userLocation,
-        activeAddresses,
+        active,
         apiKey
       );
 
-      // 2. Update state with sorted order
-      // We replace the list with the sorted one, appending completed ones at the end
-      setAddresses([...sortedAddresses, ...completedAddresses]);
-
-      // 3. Get route shape (polyline)
-      const shape = await getRouteShape(userLocation, sortedAddresses, apiKey);
+      // Update state with sorted order, appending completed ones at the end
+      setAddresses([...sortedAddresses, ...completed]);
       setRouteShape(shape);
 
       // Switch to map view on mobile so user can see result
@@ -171,13 +137,13 @@ const App: React.FC = () => {
     const trimmed = key.trim();
     if (trimmed) {
       setApiKey(trimmed);
-      localStorage.setItem(STORAGE_KEY, trimmed);
+      saveHereApiKey(trimmed);
       setShowKeyModal(false);
     }
   };
 
   const handleResetKey = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    removeHereApiKey();
     setApiKey("");
     setShowKeyModal(true);
     setAddresses([]);
