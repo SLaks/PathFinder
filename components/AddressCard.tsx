@@ -3,7 +3,7 @@ import { Address } from "../types";
 import { getAddressColor } from "../utils/colors";
 import { getInitials } from "../utils/formatters";
 
-interface AddressCardProps {
+export interface AddressCardProps {
   address: Address;
   index: number;
   onClick?: () => void;

@@ -24,7 +24,7 @@ import { SheetInfo } from "../services/googleSheetService";
 import { createGoogleMapsNavigationLink } from "../services/routeService";
 import { AddressCard } from "./AddressCard";
 
-interface SidebarProps {
+export interface SidebarProps {
   addresses: Address[];
   setAddresses: React.Dispatch<React.SetStateAction<Address[]>>;
   onOptimize: () => void;
