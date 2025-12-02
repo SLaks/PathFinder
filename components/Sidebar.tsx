@@ -1,4 +1,11 @@
 import React, { useState, useCallback, useEffect } from "react";
+import Icon from "@mdi/react";
+import {
+  mdiSync,
+  mdiChevronDown,
+  mdiChevronRight,
+  mdiGoogleSpreadsheet,
+} from "@mdi/js";
 import { Address, GeoPoint, ImportStatus, SheetConfig } from "../types";
 import { parseAddressesFromText } from "../services/addressService";
 import {
@@ -67,6 +74,16 @@ const Sidebar: React.FC<SidebarProps> = ({
     pendingSpreadsheetId: "",
     pendingSpreadsheetName: "",
   });
+
+  // Collapsible State
+  const [isSourceExpanded, setIsSourceExpanded] = useState(true);
+
+  // Auto-collapse when a sheet is selected (optional, can be removed if not desired)
+  useEffect(() => {
+    if (sheetConfig) {
+      setIsSourceExpanded(false);
+    }
+  }, [sheetConfig]);
 
   // Load saved configs on mount
   useEffect(() => {
@@ -251,113 +268,191 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {/* Google Import Section */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="block text-sm font-medium text-gray-700">
-              Import Source
-            </label>
-            {sheetConfig && (
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full truncate max-w-[150px]">
-                {sheetConfig.spreadsheetName}
-                {sheetConfig.sheetTitle && ` / ${sheetConfig.sheetTitle}`}
-              </span>
-            )}
-          </div>
+        {/* Source Selection Section */}
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold text-gray-800 ml-1">
+            Data Source
+          </h3>
+          <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+            {/* Header / Collapsed View */}
+            <div
+              className={`flex items-center justify-between p-3 bg-white ${
+                !isSourceExpanded ? "" : "border-b border-gray-200"
+              }`}
+            >
+              <div className="flex items-center gap-2 overflow-hidden">
+                {!isSourceExpanded && sheetConfig ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 overflow-hidden">
+                    <Icon
+                      path={mdiGoogleSpreadsheet}
+                      size={0.8}
+                      className="text-green-600"
+                    />
+                    <span className="truncate font-medium text-gray-900">
+                      {sheetConfig.spreadsheetName}
+                    </span>
+                    {sheetConfig.sheetTitle && (
+                      <span className="text-xs text-gray-500 truncate">
+                        / {sheetConfig.sheetTitle}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-sm text-gray-500 font-medium">
+                    {isSourceExpanded
+                      ? "Configure Import"
+                      : "No Source Selected"}
+                  </span>
+                )}
+              </div>
 
-          {sheetConfig ? (
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleGoogleAction("SYNC")}
-                disabled={isBusy}
-                className={`flex-1 py-2 px-3 bg-green-600 text-white rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-                  isBusy
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-green-700"
-                }`}
-              >
-                {isSyncing ? "Loading..." : "Sync Sheet"}
-              </button>
-              <button
-                onClick={() => handleGoogleAction("PICK")}
-                disabled={isBusy}
-                className={`py-2 px-3 bg-gray-200 text-gray-700 rounded-md text-sm font-medium transition-colors ${
-                  isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"
-                }`}
-                title="Change Sheet"
-              >
-                Change
-              </button>
+              <div className="flex items-center gap-1">
+                {!isSourceExpanded && sheetConfig && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGoogleAction("SYNC");
+                    }}
+                    disabled={isBusy}
+                    className={`p-1.5 rounded-full hover:bg-gray-100 text-green-600 transition-colors ${
+                      isBusy ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    title="Sync Sheet"
+                  >
+                    <Icon path={mdiSync} size={0.8} spin={isSyncing} />
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsSourceExpanded(!isSourceExpanded)}
+                  className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+                  title={isSourceExpanded ? "Collapse" : "Expand"}
+                >
+                  <Icon
+                    path={isSourceExpanded ? mdiChevronDown : mdiChevronRight}
+                    size={0.9}
+                  />
+                </button>
+              </div>
             </div>
-          ) : (
-            <button
-              onClick={() => handleGoogleAction("PICK")}
-              disabled={isBusy}
-              className={`w-full py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm ${
-                isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
-              }`}
-            >
-              <svg
-                className="w-5 h-5 text-green-600"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="12" y1="18" x2="12" y2="12"></line>
-                <line x1="9" y1="15" x2="15" y2="15"></line>
-              </svg>
-              Connect Google Sheet
-            </button>
-          )}
-        </div>
 
-        <div className="relative">
-          <div
-            className="absolute inset-0 flex items-center"
-            aria-hidden="true"
-          >
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-white px-2 text-xs text-gray-500 uppercase">
-              Or Paste Text
-            </span>
-          </div>
-        </div>
+            {/* Expanded Content */}
+            {isSourceExpanded && (
+              <div className="p-4 space-y-4">
+                {/* Google Import Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Google Sheets
+                    </label>
+                    {sheetConfig && (
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full truncate max-w-[150px]">
+                        {sheetConfig.spreadsheetName}
+                      </span>
+                    )}
+                  </div>
 
-        {/* Text Import Section */}
-        <div className="space-y-3">
-          <textarea
-            className={`w-full h-24 p-3 text-sm text-white bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-shadow placeholder-gray-400 ${
-              isBusy ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            placeholder="Paste addresses here (e.g. Name | Address)..."
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            disabled={isBusy}
-          />
-          <div className="flex items-center justify-between">
-            <button
-              onClick={handleImport}
-              disabled={isBusy || !inputText}
-              className={`px-4 py-2 rounded-md text-sm font-medium text-white transition-colors ${
-                isBusy || !inputText
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-slate-800 hover:bg-slate-900"
-              }`}
-            >
-              {importStatus === ImportStatus.PARSING
-                ? "Parsing..."
-                : "Parse Text"}
-            </button>
-            {importStatus === ImportStatus.SUCCESS && (
-              <span className="text-xs text-green-600 font-medium">
-                Imported!
-              </span>
-            )}
-            {importStatus === ImportStatus.ERROR && (
-              <span className="text-xs text-red-600 font-medium">Failed.</span>
+                  {sheetConfig ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleGoogleAction("SYNC")}
+                        disabled={isBusy}
+                        className={`flex-1 py-2 px-3 bg-green-600 text-white rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                          isBusy
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:bg-green-700"
+                        }`}
+                      >
+                        <Icon path={mdiSync} size={0.8} spin={isSyncing} />
+                        {isSyncing ? "Syncing..." : "Sync Sheet"}
+                      </button>
+                      <button
+                        onClick={() => handleGoogleAction("PICK")}
+                        disabled={isBusy}
+                        className={`py-2 px-3 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium transition-colors ${
+                          isBusy
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:bg-gray-50"
+                        }`}
+                        title="Change Sheet"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleGoogleAction("PICK")}
+                      disabled={isBusy}
+                      className={`w-full py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm ${
+                        isBusy
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <Icon
+                        path={mdiGoogleSpreadsheet}
+                        size={0.8}
+                        className="text-green-600"
+                      />
+                      Connect Google Sheet
+                    </button>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 flex items-center"
+                    aria-hidden="true"
+                  >
+                    <div className="w-full border-t border-gray-200"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-gray-50 px-2 text-xs text-gray-400 uppercase">
+                      Or
+                    </span>
+                  </div>
+                </div>
+
+                {/* Text Import Section */}
+                <div className="space-y-3">
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Paste Text
+                  </label>
+                  <textarea
+                    className={`w-full h-24 p-3 text-sm text-gray-800 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-shadow placeholder-gray-400 ${
+                      isBusy ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    placeholder="Paste addresses here (e.g. Name | Address)..."
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    disabled={isBusy}
+                  />
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handleImport}
+                      disabled={isBusy || !inputText}
+                      className={`px-4 py-2 rounded-md text-sm font-medium text-white transition-colors ${
+                        isBusy || !inputText
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-slate-800 hover:bg-slate-900"
+                      }`}
+                    >
+                      {importStatus === ImportStatus.PARSING
+                        ? "Parsing..."
+                        : "Parse Text"}
+                    </button>
+                    {importStatus === ImportStatus.SUCCESS && (
+                      <span className="text-xs text-green-600 font-medium">
+                        Imported!
+                      </span>
+                    )}
+                    {importStatus === ImportStatus.ERROR && (
+                      <span className="text-xs text-red-600 font-medium">
+                        Failed.
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>
