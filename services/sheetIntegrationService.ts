@@ -79,11 +79,11 @@ export async function pickSheet(token: string): Promise<SheetPickerResult> {
  * Sync data from a configured sheet
  */
 export async function syncSheetData(
-  config: SheetConfig
+  config: SheetConfig,
 ): Promise<SheetSyncResult> {
   const { headers, rows } = await fetchSheetData(
     config.spreadsheetId,
-    config.sheetTitle
+    config.sheetTitle,
   );
 
   if (!headers || headers.length === 0) {
@@ -125,14 +125,14 @@ export async function updateSheetStatus(
   config: SheetConfig,
   rowIndex: number,
   statusColumnIndex: number,
-  completed: boolean
+  completed: boolean,
 ): Promise<void> {
   await updateSheetCell(
     config.spreadsheetId,
     config.sheetTitle || "Sheet1",
     rowIndex,
     statusColumnIndex,
-    completed ? "TRUE" : "FALSE"
+    completed ? "TRUE" : "FALSE",
   );
 }
 
@@ -142,7 +142,7 @@ export async function updateSheetStatus(
 export async function selectAndSyncSheet(
   spreadsheetId: string,
   spreadsheetName: string,
-  sheet: SheetInfo
+  sheet: SheetInfo,
 ): Promise<SheetSyncResult> {
   const config: SheetConfig = {
     spreadsheetId,

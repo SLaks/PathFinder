@@ -7,6 +7,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 
 export default tseslint.config(
   { files: ["**/*.{js,mjs,cjs,ts,tsx}"] },
+  { ignores: ["dist/"] },
   {
     languageOptions: { globals: globals.browser },
   },
@@ -40,5 +41,5 @@ export default tseslint.config(
         project: "tsconfig.json",
       },
     },
-  }
+  },
 );

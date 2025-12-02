@@ -42,13 +42,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [inputText, setInputText] = useState("");
   const [importStatus, setImportStatus] = useState<ImportStatus>(
-    ImportStatus.IDLE
+    ImportStatus.IDLE,
   );
 
   // Google Sheets State
   const [sheetConfig, setSheetConfig] = useState<SheetConfig | null>(null);
   const [statusColumnIndex, setStatusColumnIndex] = useState<number | null>(
-    null
+    null,
   );
   const [isSyncing, setIsSyncing] = useState(false);
   const isBusy =
@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         setImportStatus(ImportStatus.ERROR);
       }
     },
-    [setAddresses, setImportStatus]
+    [setAddresses, setImportStatus],
   );
 
   const handleImport = useCallback(async () => {
@@ -153,7 +153,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     } catch (error) {
       console.error("Google Sheet Error:", error);
       alert(
-        "Failed to connect to Google Sheets. Ensure your account has access."
+        "Failed to connect to Google Sheets. Ensure your account has access.",
       );
       setImportStatus(ImportStatus.ERROR);
     } finally {
@@ -172,7 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       const result = await selectAndSyncSheet(
         pendingSpreadsheetId,
         pendingSpreadsheetName,
-        sheet
+        sheet,
       );
 
       setAddresses(result.addresses);
@@ -198,7 +198,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const handleToggleComplete = async (id: string, completed: boolean) => {
     // 1. Update local state
     setAddresses((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, completed } : a))
+      prev.map((a) => (a.id === id ? { ...a, completed } : a)),
     );
 
     // 2. Update Google Sheet if linked
@@ -215,7 +215,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           sheetConfig,
           addr.sheetRow,
           statusColumnIndex,
-          completed
+          completed,
         );
       } catch (e) {
         console.error("Failed to update sheet", e);

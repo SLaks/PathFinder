@@ -18,13 +18,13 @@ export interface OptimizedRoute {
 export async function optimizeRoute(
   userLocation: GeoPoint,
   addresses: Address[],
-  apiKey: string
+  apiKey: string,
 ): Promise<OptimizedRoute> {
   // 1. Calculate optimal sequence
   const { sortedAddresses } = await calculateOptimalSequence(
     userLocation,
     addresses,
-    apiKey
+    apiKey,
   );
 
   // 2. Get route shape (polyline)

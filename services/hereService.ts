@@ -16,7 +16,7 @@ interface CacheEntry {
 
 // Helper to get from local storage
 function getFromCache(
-  key: string
+  key: string,
 ): { position: GeoPoint; address: string } | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
@@ -32,7 +32,7 @@ function getFromCache(
 // Helper to save to local storage
 function addToCache(
   key: string,
-  data: { position: GeoPoint; address: string }
+  data: { position: GeoPoint; address: string },
 ) {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
@@ -68,7 +68,7 @@ async function fetchWithChecks(url: string, apiName: string): Promise<any> {
     const remaining = response.headers.get("X-RateLimit-Remaining") || "N/A";
     const reset = response.headers.get("X-RateLimit-Reset") || "N/A";
     throw new Error(
-      `Rate limit exceeded for ${apiName}.\nLimit: ${limit}\nRemaining: ${remaining}\nReset: ${reset}`
+      `Rate limit exceeded for ${apiName}.\nLimit: ${limit}\nRemaining: ${remaining}\nReset: ${reset}`,
     );
   }
 
@@ -97,7 +97,7 @@ async function fetchWithChecks(url: string, apiName: string): Promise<any> {
 export const geocodeAddress = async (
   query: string,
   apiKey: string,
-  userLocation?: GeoPoint
+  userLocation?: GeoPoint,
 ): Promise<{ position: GeoPoint; address: string } | null> => {
   // 1. Check Cache
   const cached = getFromCache(query);

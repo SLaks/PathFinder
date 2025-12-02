@@ -19,9 +19,7 @@ export function generateAddressId(): string {
 /**
  * Parse addresses from plain text input using Gemini AI
  */
-export async function parseAddressesFromText(
-  text: string
-): Promise<Address[]> {
+export async function parseAddressesFromText(text: string): Promise<Address[]> {
   const parsed = await parseAddressesWithGemini(text);
   return parsed.map((item) => ({
     id: generateAddressId(),
@@ -36,7 +34,7 @@ export async function parseAddressesFromText(
  */
 export async function identifySheetColumns(
   headers: string[],
-  sampleRow: string[]
+  sampleRow: string[],
 ): Promise<ColumnMapping> {
   return await identifyColumnsWithGemini(headers, sampleRow);
 }
@@ -47,7 +45,7 @@ export async function identifySheetColumns(
 export function createAddressFromSheet(
   row: string[],
   mapping: ColumnMapping,
-  rowIndex: number
+  rowIndex: number,
 ): Address | null {
   // Concatenate address parts
   const addressParts = mapping.addressColumnIndices
@@ -68,7 +66,7 @@ export function createAddressFromSheet(
   if (mapping.statusColumnIndex !== undefined) {
     const statusVal = row[mapping.statusColumnIndex]?.toLowerCase() || "";
     isCompleted = ["yes", "true", "done", "completed", "x", "1"].includes(
-      statusVal
+      statusVal,
     );
   }
 
@@ -87,7 +85,7 @@ export function createAddressFromSheet(
  */
 export function parseAddressesFromSheet(
   rows: string[][],
-  mapping: ColumnMapping
+  mapping: ColumnMapping,
 ): Address[] {
   const addresses: Address[] = [];
 

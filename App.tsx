@@ -7,10 +7,7 @@ import {
   setHereApiKey as saveHereApiKey,
   removeHereApiKey,
 } from "./services/storageService";
-import {
-  getUserLocation,
-  geocodeAddresses,
-} from "./services/locationService";
+import { getUserLocation, geocodeAddresses } from "./services/locationService";
 import { optimizeRoute } from "./services/routeService";
 import { separateAddressesByStatus } from "./services/addressService";
 
@@ -56,7 +53,7 @@ const App: React.FC = () => {
 
       // Find addresses that are marked as loading but don't have a location yet
       const pendingAddresses = addresses.filter(
-        (a) => a.isGeocoding && !a.location
+        (a) => a.isGeocoding && !a.location,
       );
       if (pendingAddresses.length === 0) return;
 
@@ -66,7 +63,7 @@ const App: React.FC = () => {
         const geocodedAddresses = await geocodeAddresses(
           pendingAddresses,
           apiKey,
-          userLocation || undefined
+          userLocation || undefined,
         );
 
         // Update addresses with geocoded results
@@ -74,7 +71,7 @@ const App: React.FC = () => {
           prev.map((a) => {
             const updated = geocodedAddresses.find((ga) => ga.id === a.id);
             return updated || a;
-          })
+          }),
         );
       } catch (e: any) {
         alert(e.message);
@@ -98,7 +95,7 @@ const App: React.FC = () => {
       const { sortedAddresses, routeShape: shape } = await optimizeRoute(
         userLocation,
         active,
-        apiKey
+        apiKey,
       );
 
       // Update state with sorted order, appending completed ones at the end

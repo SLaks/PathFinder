@@ -38,7 +38,7 @@ export function getUserLocation(): Promise<GeoPoint> {
             break;
         }
         reject(new Error(message));
-      }
+      },
     );
   });
 }
@@ -50,7 +50,7 @@ export function getUserLocation(): Promise<GeoPoint> {
 export async function geocodeAddresses(
   addresses: Address[],
   apiKey: string,
-  userLocation?: GeoPoint
+  userLocation?: GeoPoint,
 ): Promise<Address[]> {
   const results: Address[] = [];
 
@@ -59,7 +59,7 @@ export async function geocodeAddresses(
       const result = await geocodeAddress(
         addr.originalText,
         apiKey,
-        userLocation
+        userLocation,
       );
 
       results.push({

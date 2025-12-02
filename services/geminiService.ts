@@ -4,7 +4,7 @@ import { ColumnMapping } from "../types";
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const parseAddressesWithGemini = async (
-  text: string
+  text: string,
 ): Promise<{ name?: string; address: string }[]> => {
   try {
     const response = await ai.models.generateContent({
@@ -51,7 +51,7 @@ export const parseAddressesWithGemini = async (
 
 export const identifyColumnsWithGemini = async (
   headers: string[],
-  sampleRow: string[]
+  sampleRow: string[],
 ): Promise<ColumnMapping> => {
   try {
     const response = await ai.models.generateContent({

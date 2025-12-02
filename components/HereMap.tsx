@@ -44,7 +44,7 @@ const HereMap: React.FC<HereMapProps> = ({
             index={addresses.indexOf(addr)}
             isCompact
           />
-        </div>
+        </div>,
       );
 
       const point = marker.getGeometry() as H.geo.Point;
@@ -54,11 +54,11 @@ const HereMap: React.FC<HereMapProps> = ({
       const { x, y } = hMap.geoToScreen(point)!;
       const bubble = new window.H.ui.InfoBubble(
         hMap.screenToGeo(x, y - 36) || point,
-        { content }
+        { content },
       );
       uiRef.current!.addBubble(bubble);
     },
-    [addresses]
+    [addresses],
   );
 
   // Initialize Map
@@ -79,7 +79,7 @@ const HereMap: React.FC<HereMapProps> = ({
         center: userLocation || { lat: 50, lng: 5 },
         zoom: 4,
         pixelRatio: window.devicePixelRatio || 1,
-      }
+      },
     );
 
     // Interactive behavior
@@ -123,7 +123,7 @@ const HereMap: React.FC<HereMapProps> = ({
     if (userLocation) {
       const userIcon = new window.H.map.Icon(
         `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#2563eb" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`,
-        { size: { w: 24, h: 24 }, anchor: { x: 12, y: 12 } }
+        { size: { w: 24, h: 24 }, anchor: { x: 12, y: 12 } },
       );
       const userMarker = new window.H.map.Marker(userLocation, {
         icon: userIcon,
@@ -189,7 +189,7 @@ const HereMap: React.FC<HereMapProps> = ({
           position: targetAddr.location,
           zoom: 16,
         },
-        true // animate
+        true, // animate
       );
 
       // Show Bubble
@@ -222,7 +222,7 @@ const HereMap: React.FC<HereMapProps> = ({
       if (targetAddr && targetAddr.location) {
         const circle = new window.H.map.Circle(
           targetAddr.location,
-          50 // radius in meters
+          50, // radius in meters
         );
         circle.setStyle({
           strokeColor: "rgba(37, 99, 235, 0.8)", // blue-600

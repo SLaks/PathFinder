@@ -11,7 +11,7 @@ let tokenClient: any;
 
 export const loadGoogleModules = (
   apiKey: string,
-  clientId: string
+  clientId: string,
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     const checkLibs = () => {
@@ -91,7 +91,7 @@ export const getAccessToken = (): Promise<string> => {
 
 export const openGooglePicker = (
   accessToken: string,
-  apiKey: string
+  apiKey: string,
 ): Promise<{ id: string; name: string } | null> => {
   return new Promise((resolve, reject) => {
     if (!window.google || !window.google.picker) {
@@ -111,7 +111,7 @@ export const openGooglePicker = (
     };
 
     const view = new window.google.picker.DocsView(
-      window.google.picker.ViewId.SPREADSHEETS
+      window.google.picker.ViewId.SPREADSHEETS,
     );
     const picker = new window.google.picker.PickerBuilder()
       .setDeveloperKey(apiKey)
@@ -131,7 +131,7 @@ export interface SheetInfo {
 }
 
 export const fetchSheetMetadata = async (
-  spreadsheetId: string
+  spreadsheetId: string,
 ): Promise<SheetInfo[]> => {
   try {
     const meta = await window.gapi.client.sheets.spreadsheets.get({
@@ -155,7 +155,7 @@ export interface SheetData {
 
 export const fetchSheetData = async (
   spreadsheetId: string,
-  sheetTitle?: string
+  sheetTitle?: string,
 ): Promise<SheetData> => {
   try {
     let rangeName = "";
@@ -196,7 +196,7 @@ export const updateSheetCell = async (
   sheetTitle: string,
   rowIndex: number, // 1-based index
   colIndex: number, // 0-based index (A=0, B=1, etc.)
-  value: string | boolean | number
+  value: string | boolean | number,
 ): Promise<void> => {
   try {
     const colLetter = String.fromCharCode(65 + colIndex); // Simple A-Z conversion. TODO: Handle AA, AB etc if needed
