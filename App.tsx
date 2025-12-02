@@ -16,7 +16,7 @@ const STORAGE_KEY = "here_api_key";
 // We will prompt user for key.
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>("");
-  const [showKeyModal, setShowKeyModal] = useState<boolean>(true);
+  const [showKeyModal, setShowKeyModal] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState<GeoPoint | null>(null);
   const [userZip, setUserZip] = useState<string | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -34,8 +34,8 @@ const App: React.FC = () => {
     const storedKey = localStorage.getItem(STORAGE_KEY);
     if (storedKey) {
       setApiKey(storedKey);
-      setShowKeyModal(false);
     }
+    setShowKeyModal(!storedKey);
   }, []);
 
   // Get user location on mount
