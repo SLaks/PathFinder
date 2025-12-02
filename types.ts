@@ -41,9 +41,16 @@ export interface GoogleCreds {
   apiKey: string;
 }
 
+export interface ColumnMapping {
+  nameColumnIndices?: number[];
+  addressColumnIndices: number[];
+  statusColumnIndex?: number;
+}
+
 export interface SheetConfig {
   spreadsheetId: string;
   spreadsheetName: string;
   sheetId?: number;
   sheetTitle?: string;
+  columnMapping?: ColumnMapping;
 }

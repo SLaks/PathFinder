@@ -1,6 +1,9 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Address, GeoPoint, ImportStatus, SheetConfig } from "../types";
-import { parseAddressesWithGemini } from "../services/geminiService";
+import {
+  parseAddressesWithGemini,
+  identifyColumnsWithGemini,
+} from "../services/geminiService";
 import {
   loadGoogleModules,
   getAccessToken,
@@ -120,6 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       let targetSheetId = sheetConfig?.spreadsheetId;
       let targetSheetName = sheetConfig?.spreadsheetName;
       let targetSheetTitle = sheetConfig?.sheetTitle;
+      let targetMapping = sheetConfig?.columnMapping;
 
       // 3. Pick File if needed
       if (action === "PICK" || !targetSheetId) {
@@ -147,6 +151,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         // Default to first sheet
         targetSheetTitle = sheets[0].title;
+        // Reset mapping on new sheet pick
+        targetMapping = undefined;
+
         const newConfig: SheetConfig = {
           spreadsheetId: targetSheetId,
           spreadsheetName: targetSheetName,
@@ -165,100 +172,79 @@ const Sidebar: React.FC<SidebarProps> = ({
           targetSheetTitle
         );
 
-        // Find "Delivered" or "Status" column
-        let statusColIdx = -1;
-        const statusKeywords = [
-          "delivered",
-          "done",
-          "completed",
-          "status",
-          "complete",
-        ];
+        if (!headers || headers.length === 0) {
+          alert("Sheet is empty or missing headers.");
+          setIsSyncing(false);
+          return;
+        }
 
-        // Check headers first
-        if (headers) {
-          statusColIdx = headers.findIndex((h) =>
-            statusKeywords.includes(h.toLowerCase().trim())
+        // 5. Identify Columns (if not cached)
+        if (!targetMapping) {
+          setImportStatus(ImportStatus.PARSING);
+          // Use the first row as sample
+          const sampleRow = rows.length > 0 ? rows[0] : [];
+          targetMapping = await identifyColumnsWithGemini(headers, sampleRow);
+
+          // Save mapping
+          const updatedConfig: SheetConfig = {
+            spreadsheetId: targetSheetId,
+            spreadsheetName: targetSheetName!,
+            sheetTitle: targetSheetTitle,
+            columnMapping: targetMapping,
+          };
+          setSheetConfig(updatedConfig);
+          localStorage.setItem(
+            STORAGE_SHEET_CONFIG,
+            JSON.stringify(updatedConfig)
           );
         }
 
-        setStatusColumnIndex(statusColIdx);
+        // 6. Parse Data using Mapping
+        if (targetMapping) {
+          setStatusColumnIndex(targetMapping.statusColumnIndex ?? null);
 
-        // Prepare text for Gemini
-        // We'll join all columns for parsing, but keep track of raw rows
-        const rawText = rows.map((r) => r.join(" | ")).join("\n");
+          const newAddresses: Address[] = [];
 
-        // Parse with Gemini
-        setImportStatus(ImportStatus.PARSING);
-        const parsedItems = await parseAddressesWithGemini(rawText);
+          rows.forEach((row, rowIndex) => {
+            // Concatenate address parts
+            const addressParts = targetMapping!.addressColumnIndices.map(idx => row[idx]).filter(Boolean);
+            const addressText = addressParts.join(" ");
+            
+            if (!addressText.trim()) return; // Skip empty addresses
 
-        // Map back to rows
-        // Strategy: Fuzzy match or just assume order if Gemini preserves it?
-        // Gemini might filter or reorder.
-        // Better strategy: We know the input text order matches the rows (mostly).
-        // But Gemini output is a list of extracted addresses.
-        // Let's try to find the address string in the row content.
-
-        const newAddresses: Address[] = [];
-        const usedRows = new Set<number>();
-
-        parsedItems.forEach((item) => {
-          // Find matching row
-          // We search through rows to find one that contains the address text
-          // AND hasn't been used yet.
-          let bestRowIdx = -1;
-
-          // Simple inclusion check
-          // We iterate all rows to find the best match
-          // This is O(N*M), might be slow for huge sheets but fine for <1000 rows
-          for (let i = 0; i < rows.length; i++) {
-            if (usedRows.has(i)) continue;
-
-            const rowStr = rows[i].join(" ").toLowerCase();
-            // Check if address part is in row
-            // This is a bit loose.
-            if (rowStr.includes(item.address.toLowerCase().split(",")[0])) {
-              bestRowIdx = i;
-              break;
+            // Concatenate name parts
+            const nameParts = targetMapping!.nameColumnIndices
+                ? targetMapping!.nameColumnIndices.map(idx => row[idx]).filter(Boolean)
+                : [];
+            const nameText = nameParts.length > 0 ? nameParts.join(" ") : undefined;
+            
+            let isCompleted = false;
+            if (targetMapping!.statusColumnIndex !== undefined) {
+               const statusVal = row[targetMapping!.statusColumnIndex]?.toLowerCase() || "";
+               isCompleted = ["yes", "true", "done", "completed", "x", "1"].includes(statusVal);
             }
-          }
 
-          let isCompleted = false;
-          if (bestRowIdx !== -1) {
-            usedRows.add(bestRowIdx);
-            // Check status column
-            if (statusColIdx !== -1 && rows[bestRowIdx][statusColIdx]) {
-              const statusVal = rows[bestRowIdx][statusColIdx].toLowerCase();
-              isCompleted = [
-                "yes",
-                "true",
-                "done",
-                "completed",
-                "x",
-                "1",
-              ].includes(statusVal);
-            }
-          }
-
-          newAddresses.push({
-            id: Math.random().toString(36).substr(2, 9),
-            originalText: item.address,
-            name: item.name,
-            isGeocoding: true,
-            sheetRow: bestRowIdx !== -1 ? bestRowIdx + 2 : undefined, // +2 because 1-based and header is row 1
-            completed: isCompleted,
+            newAddresses.push({
+              id: Math.random().toString(36).substr(2, 9),
+              originalText: addressText,
+              name: nameText,
+              isGeocoding: true,
+              sheetRow: rowIndex + 2, // +2 because 1-based and header is row 1
+              completed: isCompleted,
+            });
           });
-        });
 
-        setAddresses(newAddresses);
-        setImportStatus(ImportStatus.SUCCESS);
-        setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
+          setAddresses(newAddresses);
+          setImportStatus(ImportStatus.SUCCESS);
+          setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
+        }
       }
     } catch (error) {
       console.error("Google Sheet Error:", error);
       alert(
         "Failed to connect to Google Sheets. Ensure your account has access."
       );
+      setImportStatus(ImportStatus.ERROR);
     } finally {
       setIsSyncing(false);
     }
