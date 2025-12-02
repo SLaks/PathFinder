@@ -11,6 +11,7 @@ interface AddressCardProps {
   onMouseLeave?: () => void;
   className?: string;
   isCompact?: boolean; // For map bubble
+  disabled?: boolean;
 }
 
 export const AddressCard: React.FC<AddressCardProps> = ({
@@ -21,6 +22,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   onMouseLeave,
   className = "",
   isCompact = false,
+  disabled = false,
 }) => {
   const color = getAddressColor(index);
   const initials = getInitials(address.name || address.originalText);
@@ -29,14 +31,23 @@ export const AddressCard: React.FC<AddressCardProps> = ({
 
   let containerClass = `rounded-lg border flex gap-3 items-start transition-all ${className}`;
 
-  if (onClick) containerClass += " cursor-pointer";
+  if (disabled) {
+    containerClass += " opacity-50 pointer-events-none grayscale";
+  } else if (onClick) {
+    containerClass += " cursor-pointer";
+  }
 
-  if (isError) {
-    containerClass += " bg-red-50 border-red-100";
-  } else if (isLoading) {
-    containerClass += " bg-blue-50 border-blue-100";
+  if (!disabled) {
+    if (isError) {
+      containerClass += " bg-red-50 border-red-100";
+    } else if (isLoading) {
+      containerClass += " bg-blue-50 border-blue-100";
+    } else {
+      containerClass += " bg-white border-gray-200 hover:border-blue-300";
+    }
   } else {
-    containerClass += " bg-white border-gray-200 hover:border-blue-300";
+    // simplified style for disabled
+    containerClass += " bg-gray-50 border-gray-200";
   }
 
   // Override for compact map bubble
@@ -47,9 +58,9 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   return (
     <div
       className={containerClass}
-      onClick={onClick}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      onClick={!disabled ? onClick : undefined}
+      onMouseEnter={!disabled ? onMouseEnter : undefined}
+      onMouseLeave={!disabled ? onMouseLeave : undefined}
     >
       {/* Avatar / Initials */}
       <div className="flex-shrink-0 flex flex-col items-center gap-1">

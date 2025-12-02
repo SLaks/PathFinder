@@ -52,6 +52,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Google Sheets State
   const [sheetConfig, setSheetConfig] = useState<SheetConfig | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const isBusy =
+    isOptimizing ||
+    isGeocoding ||
+    isSyncing ||
+    importStatus === ImportStatus.PARSING;
   const [sheetSelection, setSheetSelection] = useState<{
     isOpen: boolean;
     sheets: SheetInfo[];
@@ -210,7 +215,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex flex-col gap-1 items-end">
           <button
             onClick={onResetKey}
-            className="text-xs bg-white/10 hover:bg-white/20 text-blue-50 px-2 py-1 rounded transition-colors"
+            disabled={isBusy}
+            className={`text-xs bg-white/10 text-blue-50 px-2 py-1 rounded transition-colors ${
+              isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-white/20"
+            }`}
             title="Reset HERE API Key"
           >
             Here Key
@@ -237,15 +245,21 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={() => handleGoogleAction("SYNC")}
-                disabled={isSyncing || importStatus === ImportStatus.PARSING}
-                className="flex-1 py-2 px-3 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                disabled={isBusy}
+                className={`flex-1 py-2 px-3 bg-green-600 text-white rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                  isBusy
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-green-700"
+                }`}
               >
                 {isSyncing ? "Loading..." : "Sync Sheet"}
               </button>
               <button
                 onClick={() => handleGoogleAction("PICK")}
-                disabled={isSyncing}
-                className="py-2 px-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md text-sm font-medium transition-colors"
+                disabled={isBusy}
+                className={`py-2 px-3 bg-gray-200 text-gray-700 rounded-md text-sm font-medium transition-colors ${
+                  isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"
+                }`}
                 title="Change Sheet"
               >
                 Change
@@ -254,8 +268,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           ) : (
             <button
               onClick={() => handleGoogleAction("PICK")}
-              disabled={isSyncing}
-              className="w-full py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"
+              disabled={isBusy}
+              className={`w-full py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm ${
+                isBusy ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
+              }`}
             >
               <svg
                 className="w-5 h-5 text-green-600"
@@ -289,17 +305,20 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Text Import Section */}
         <div className="space-y-3">
           <textarea
-            className="w-full h-24 p-3 text-sm text-white bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-shadow placeholder-gray-400"
+            className={`w-full h-24 p-3 text-sm text-white bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-shadow placeholder-gray-400 ${
+              isBusy ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             placeholder="Paste addresses here (e.g. Name | Address)..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
+            disabled={isBusy}
           />
           <div className="flex items-center justify-between">
             <button
               onClick={handleImport}
-              disabled={importStatus === ImportStatus.PARSING || !inputText}
+              disabled={isBusy || !inputText}
               className={`px-4 py-2 rounded-md text-sm font-medium text-white transition-colors ${
-                importStatus === ImportStatus.PARSING
+                isBusy || !inputText
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-slate-800 hover:bg-slate-900"
               }`}
@@ -328,7 +347,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             {addresses.length > 0 && (
               <button
                 onClick={() => setAddresses([])}
-                className="text-xs text-red-500 hover:text-red-700"
+                disabled={isBusy}
+                className={`text-xs text-red-500 ${
+                  isBusy
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:text-red-700"
+                }`}
               >
                 Clear
               </button>
@@ -350,6 +374,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onMouseEnter={() => onHoverAddress(addr.id)}
                 onMouseLeave={() => onHoverAddress(null)}
                 className="p-3"
+                disabled={isBusy}
               />
             ))}
           </div>
