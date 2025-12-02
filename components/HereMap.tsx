@@ -161,9 +161,18 @@ const HereMap: React.FC<HereMapProps> = ({
     });
 
     if (addresses.length > 0 || userLocation) {
-      map.getViewModel().setLookAtData({
-        bounds: group.getBoundingBox(),
-      });
+      const objects = group.getObjects();
+      if (objects.length === 1) {
+        const marker = objects[0] as H.map.Marker;
+        map.getViewModel().setLookAtData({
+          position: marker.getGeometry() as H.geo.Point,
+          zoom: 16,
+        });
+      } else {
+        map.getViewModel().setLookAtData({
+          bounds: group.getBoundingBox(),
+        });
+      }
     }
   }, [addresses, userLocation, showBubble]);
 
