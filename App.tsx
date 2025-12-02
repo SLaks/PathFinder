@@ -9,7 +9,6 @@ import {
 } from "./services/storageService";
 import {
   getUserLocation,
-  reverseGeocode,
   geocodeAddresses,
 } from "./services/locationService";
 import { optimizeRoute } from "./services/routeService";
@@ -19,7 +18,6 @@ const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>("");
   const [showKeyModal, setShowKeyModal] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState<GeoPoint | null>(null);
-  const [userZip, setUserZip] = useState<string | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isOptimizing, setIsOptimizing] = useState<boolean>(false);
   const [isGeocoding, setIsGeocoding] = useState<boolean>(false);
@@ -51,19 +49,6 @@ const App: React.FC = () => {
       });
   }, []);
 
-  // Fetch User Zip Code for Geocoding Context
-  useEffect(() => {
-    if (userLocation && apiKey && !userZip) {
-      reverseGeocode(userLocation, apiKey)
-        .then((zip) => {
-          if (zip) setUserZip(zip);
-        })
-        .catch((e) => {
-          console.warn("Failed to get user zip code", e);
-        });
-    }
-  }, [userLocation, apiKey, userZip]);
-
   // Geocode addresses when they are added (if they don't have location)
   useEffect(() => {
     const geocodePending = async () => {
@@ -71,7 +56,7 @@ const App: React.FC = () => {
 
       // Find addresses that are marked as loading but don't have a location yet
       const pendingAddresses = addresses.filter(
-        (a) => a.isGeocoding && !a.location,
+        (a) => a.isGeocoding && !a.location
       );
       if (pendingAddresses.length === 0) return;
 
@@ -81,7 +66,7 @@ const App: React.FC = () => {
         const geocodedAddresses = await geocodeAddresses(
           pendingAddresses,
           apiKey,
-          userZip || undefined
+          userLocation || undefined
         );
 
         // Update addresses with geocoded results
@@ -99,7 +84,7 @@ const App: React.FC = () => {
     };
 
     geocodePending();
-  }, [addresses, apiKey, userZip, isGeocoding]);
+  }, [addresses, apiKey, isGeocoding, userLocation]);
 
   const handleOptimize = async () => {
     if (!userLocation || !apiKey) return;

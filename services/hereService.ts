@@ -1,7 +1,6 @@
 import { GeoPoint, Address } from "../types";
 
 const GEOCODE_URL = "https://geocode.search.hereapi.com/v1/geocode";
-const REV_GEOCODE_URL = "https://revgeocode.search.hereapi.com/v1/revgeocode";
 const SEQUENCE_URL = "https://wps.hereapi.com/v8/findsequence2";
 const ROUTING_URL = "https://router.hereapi.com/v8/routes";
 
@@ -17,7 +16,7 @@ interface CacheEntry {
 
 // Helper to get from local storage
 function getFromCache(
-  key: string,
+  key: string
 ): { position: GeoPoint; address: string } | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
@@ -33,7 +32,7 @@ function getFromCache(
 // Helper to save to local storage
 function addToCache(
   key: string,
-  data: { position: GeoPoint; address: string },
+  data: { position: GeoPoint; address: string }
 ) {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
@@ -69,7 +68,7 @@ async function fetchWithChecks(url: string, apiName: string): Promise<any> {
     const remaining = response.headers.get("X-RateLimit-Remaining") || "N/A";
     const reset = response.headers.get("X-RateLimit-Reset") || "N/A";
     throw new Error(
-      `Rate limit exceeded for ${apiName}.\nLimit: ${limit}\nRemaining: ${remaining}\nReset: ${reset}`,
+      `Rate limit exceeded for ${apiName}.\nLimit: ${limit}\nRemaining: ${remaining}\nReset: ${reset}`
     );
   }
 
@@ -95,46 +94,24 @@ async function fetchWithChecks(url: string, apiName: string): Promise<any> {
   return response.json();
 }
 
-export const getUserZipCode = async (
-  point: GeoPoint,
-  apiKey: string,
-): Promise<string | null> => {
-  try {
-    const url = new URL(REV_GEOCODE_URL);
-    url.searchParams.append("at", `${point.lat},${point.lng}`);
-    url.searchParams.append("apiKey", apiKey);
-
-    const data = await fetchWithChecks(url.toString(), "Reverse Geocoding");
-
-    if (data.items && data.items.length > 0) {
-      return data.items[0].address.postalCode || null;
-    }
-    return null;
-  } catch (e: any) {
-    if (e.message && e.message.includes("Rate limit")) throw e;
-    console.error("Reverse geocoding error", e);
-    return null;
-  }
-};
-
 export const geocodeAddress = async (
   query: string,
   apiKey: string,
-  userZip?: string,
+  userLocation?: GeoPoint
 ): Promise<{ position: GeoPoint; address: string } | null> => {
-  // Construct query key
-  const q = userZip ? `${query} ${userZip}` : query;
-
   // 1. Check Cache
-  const cached = getFromCache(q);
+  const cached = getFromCache(query);
   if (cached) {
     return cached;
   }
 
   try {
     const url = new URL(GEOCODE_URL);
-    url.searchParams.append("q", q);
+    url.searchParams.append("q", query);
     url.searchParams.append("apiKey", apiKey);
+    if (userLocation) {
+      url.searchParams.append("at", `${userLocation.lat},${userLocation.lng}`);
+    }
 
     const data = await fetchWithChecks(url.toString(), "Geocoding");
 
@@ -145,7 +122,7 @@ export const geocodeAddress = async (
       };
 
       // 2. Update Cache
-      addToCache(q, result);
+      addToCache(query, result);
 
       return result;
     }

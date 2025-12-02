@@ -57,8 +57,10 @@ export const identifyColumnsWithGemini = async (
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: `Analyze the following spreadsheet headers and a sample row to identify the column indices for:
-      1. Address (Required): The columns that make up the address (e.g., "Address", "City", "State", "Zip"). Return ALL relevant column indices in order.
-      2. Name (Optional): The columns that make up the name (e.g., "First Name", "Last Name"). Return ALL relevant column indices in order.
+      1. Address (Required): The columns that make up the address (e.g., "Address", "City", "State", "Zip").
+         Return ALL relevant column indices in proper order to render an address.
+         Ignore columns with duplicate information (e.g., if "Full Address" is present, ignore "Address", "City", etc.; ignore a "Street" column if the street name is already in other address columns).
+      2. Name (Optional): The columns that make up the name (e.g., "First Name", "Last Name"). Return ALL relevant column indices in display order (First, Last).
       3. Status (Optional): A column indicating if the stop is completed/delivered (e.g., "Delivered", "Status", "Done").
 
       Headers: ${JSON.stringify(headers)}
