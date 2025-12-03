@@ -8,18 +8,24 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "test:visual": "playwright test"
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
     "@here/maps-api-for-javascript": "^2.0.1",
+    "@mantine/core": "^8.3.9",
+    "@mantine/hooks": "^8.3.9",
     "@mdi/js": "^7.4.47",
     "@mdi/react": "^1.6.1",
+    "postcss-preset-mantine": "^1.18.0",
+    "postcss-simple-vars": "^7.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4.1.17",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",

@@ -12,5 +12,6 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "."),
     },
+    exclude: ["**/node_modules/**", "**/dist/**", "**/tests/visual/**"],
   },
 });
