@@ -400,11 +400,21 @@ const Sidebar: React.FC<SidebarProps> = ({
                         Google Sheets
                       </Text>
                       {sheetConfig && (
-                        <Badge color="green" variant="light">
-                          {sheetConfig.spreadsheetName}
+                        <Badge color="green" variant="light" tt="none">
+                          {sheetConfig.spreadsheetName} /{" "}
+                          {sheetConfig.sheetTitle}
                         </Badge>
                       )}
                     </Group>
+                    {sheetConfig?.columnMapping?.statusColumnName && (
+                      <Text size="xs" c="dimmed">
+                        Checkboxes sync to the{" "}
+                        <Text span fw={500} c="blue">
+                          {sheetConfig.columnMapping.statusColumnName}
+                        </Text>{" "}
+                        column
+                      </Text>
+                    )}
 
                     {sheetConfig ? (
                       <Group gap="xs">
@@ -537,6 +547,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                   className="p-3"
                   disabled={isBusy}
                   onToggleComplete={(val) => handleToggleComplete(addr.id, val)}
+                  statusColumnName={
+                    sheetConfig?.columnMapping?.statusColumnName
+                  }
                 />
               ))}
             </Stack>
@@ -560,6 +573,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                       disabled={isBusy}
                       onToggleComplete={(val) =>
                         handleToggleComplete(addr.id, val)
+                      }
+                      statusColumnName={
+                        sheetConfig?.columnMapping?.statusColumnName
                       }
                     />
                   ))}

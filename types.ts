@@ -47,6 +47,7 @@ export interface ColumnMapping {
   nameColumnIndices?: number[];
   addressColumnIndices: number[];
   statusColumnIndex?: number;
+  statusColumnName?: string;
 }
 
 export interface SheetConfig {

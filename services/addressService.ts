@@ -36,7 +36,18 @@ export async function identifySheetColumns(
   headers: string[],
   sampleRow: string[],
 ): Promise<ColumnMapping> {
-  return await identifyColumnsWithGemini(headers, sampleRow);
+  const mapping = await identifyColumnsWithGemini(headers, sampleRow);
+
+  // Enrich with column name if status index is present
+  if (
+    mapping.statusColumnIndex !== undefined &&
+    mapping.statusColumnIndex >= 0 &&
+    mapping.statusColumnIndex < headers.length
+  ) {
+    mapping.statusColumnName = headers[mapping.statusColumnIndex];
+  }
+
+  return mapping;
 }
 
 /**

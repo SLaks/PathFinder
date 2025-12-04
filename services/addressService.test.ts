@@ -50,6 +50,30 @@ describe("addressService", () => {
     });
   });
 
+  describe("identifySheetColumns", () => {
+    it("should enrich mapping with status column name", async () => {
+      const headers = ["Address", "Name", "Status"];
+      const sampleRow = ["123 Main", "John", "Done"];
+      const mockMapping: ColumnMapping = {
+        addressColumnIndices: [0],
+        nameColumnIndices: [1],
+        statusColumnIndex: 2,
+      };
+
+      vi.mocked(geminiService.identifyColumnsWithGemini).mockResolvedValue(
+        mockMapping,
+      );
+
+      const result = await addressService.identifySheetColumns(
+        headers,
+        sampleRow,
+      );
+
+      expect(result.statusColumnName).toBe("Status");
+      expect(result.statusColumnIndex).toBe(2);
+    });
+  });
+
   describe("createAddressFromSheet", () => {
     const mapping: ColumnMapping = {
       addressColumnIndices: [0, 1], // Address split across col 0 and 1

@@ -8,6 +8,7 @@ import {
   Loader,
   Box,
   useMantineColorScheme,
+  Tooltip,
 } from "@mantine/core";
 import { Address } from "../types";
 import { getAddressColor } from "../utils/colors";
@@ -23,6 +24,7 @@ export interface AddressCardProps {
   isCompact?: boolean; // For map bubble
   disabled?: boolean;
   onToggleComplete?: (completed: boolean) => void;
+  statusColumnName?: string;
 }
 
 export const AddressCard: React.FC<AddressCardProps> = ({
@@ -35,6 +37,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   isCompact = false,
   disabled = false,
   onToggleComplete,
+  statusColumnName,
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const color = getAddressColor(index);
@@ -78,13 +81,19 @@ export const AddressCard: React.FC<AddressCardProps> = ({
     >
       <Group align="flex-start" wrap="nowrap" gap="sm">
         {!isCompact && onToggleComplete && (
-          <Checkbox
-            checked={!!address.completed}
-            onChange={(e) => onToggleComplete(e.currentTarget.checked)}
-            disabled={disabled}
-            onClick={(e) => e.stopPropagation()}
-            mt={4}
-          />
+          <Tooltip
+            label={`Updates column: ${statusColumnName}`}
+            disabled={!statusColumnName}
+            withArrow
+          >
+            <Checkbox
+              checked={!!address.completed}
+              onChange={(e) => onToggleComplete(e.currentTarget.checked)}
+              disabled={disabled}
+              onClick={(e) => e.stopPropagation()}
+              mt={4}
+            />
+          </Tooltip>
         )}
 
         <Stack align="center" gap={4} w={32}>
