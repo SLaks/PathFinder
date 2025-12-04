@@ -47,6 +47,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
       withBorder={!isCompact}
       p={isCompact ? 0 : "sm"}
       radius="md"
+      shadow={isCompact ? "none" : "sm"}
       className={className}
       onClick={!disabled ? onClick : undefined}
       onMouseEnter={!disabled ? onMouseEnter : undefined}

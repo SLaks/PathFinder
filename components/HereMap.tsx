@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef } from "react";
-import { renderToString } from "react-dom/server";
 import { MantineProvider, useMantineColorScheme } from "@mantine/core";
 import { Address, GeoPoint } from "../types";
 import "@here/maps-api-for-javascript";
@@ -7,6 +6,7 @@ import { getAddressColor } from "../utils/colors";
 import { getInitials } from "../utils/formatters";
 import { AddressCard } from "./AddressCard";
 import { theme } from "../theme";
+import { createRoot } from "react-dom/client";
 
 interface HereMapProps {
   apiKey: string;
@@ -40,7 +40,8 @@ const HereMap: React.FC<HereMapProps> = ({
       // Close existing bubbles
       uiRef.current.getBubbles().forEach((b) => uiRef.current!.removeBubble(b));
 
-      const content = renderToString(
+      const content = document.createElement("div");
+      createRoot(content).render(
         <MantineProvider theme={theme}>
           <div style={{ padding: "8px" }}>
             <AddressCard
