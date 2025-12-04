@@ -7,6 +7,7 @@ import {
   Checkbox,
   Loader,
   Box,
+  useMantineColorScheme,
 } from "@mantine/core";
 import { Address } from "../types";
 import { getAddressColor } from "../utils/colors";
@@ -35,6 +36,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   disabled = false,
   onToggleComplete,
 }) => {
+  const { colorScheme } = useMantineColorScheme();
   const color = getAddressColor(index);
   const initials = getInitials(address.name || address.originalText);
   const isLoading = address.isGeocoding;
@@ -53,15 +55,23 @@ export const AddressCard: React.FC<AddressCardProps> = ({
         cursor: disabled ? "default" : onClick ? "pointer" : "default",
         opacity: disabled ? 0.5 : 1,
         backgroundColor: isError
-          ? "var(--mantine-color-red-0)"
+          ? colorScheme === "dark"
+            ? "var(--mantine-color-red-9)"
+            : "var(--mantine-color-red-0)"
           : isLoading
-            ? "var(--mantine-color-blue-0)"
-            : undefined,
+          ? colorScheme === "dark"
+            ? "var(--mantine-color-blue-9)"
+            : "var(--mantine-color-blue-0)"
+          : undefined,
         borderColor: isError
-          ? "var(--mantine-color-red-2)"
+          ? colorScheme === "dark"
+            ? "var(--mantine-color-red-7)"
+            : "var(--mantine-color-red-2)"
           : isLoading
-            ? "var(--mantine-color-blue-2)"
-            : undefined,
+          ? colorScheme === "dark"
+            ? "var(--mantine-color-blue-7)"
+            : "var(--mantine-color-blue-2)"
+          : undefined,
         transition: "all 0.2s ease",
       }}
     >

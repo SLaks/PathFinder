@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { renderToString } from "react-dom/server";
-import { MantineProvider } from "@mantine/core";
+import { MantineProvider, useMantineColorScheme } from "@mantine/core";
 import { Address, GeoPoint } from "../types";
 import "@here/maps-api-for-javascript";
 import { getAddressColor } from "../utils/colors";
@@ -25,6 +25,7 @@ const HereMap: React.FC<HereMapProps> = ({
   focusedAddressId,
   hoveredAddressId,
 }) => {
+  const { colorScheme } = useMantineColorScheme();
   const mapRef = useRef<HTMLDivElement>(null);
   const hMapRef = useRef<H.Map>(null);
   const uiRef = useRef<H.ui.UI>(null);
@@ -67,7 +68,7 @@ const HereMap: React.FC<HereMapProps> = ({
 
   // Initialize Map
   useEffect(() => {
-    if (!mapRef.current || !window.H || hMapRef.current) return;
+    if (!mapRef.current || !window.H) return;
     if (!apiKey) return;
 
     const platform = new window.H.service.Platform({
@@ -78,10 +79,12 @@ const HereMap: React.FC<HereMapProps> = ({
 
     const map = new window.H.Map(
       mapRef.current,
-      defaultLayers.vector.normal.map,
+      colorScheme === "dark"
+        ? defaultLayers.vector.normal.mapnight
+        : defaultLayers.vector.normal.map,
       {
         center: userLocation || { lat: 50, lng: 5 },
-        zoom: 4,
+        zoom: 16,
         pixelRatio: window.devicePixelRatio || 1,
       },
     );
@@ -113,7 +116,7 @@ const HereMap: React.FC<HereMapProps> = ({
       map.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiKey]);
+  }, [apiKey, colorScheme]);
 
   // Update User Location & Markers
   useEffect(() => {
@@ -179,7 +182,7 @@ const HereMap: React.FC<HereMapProps> = ({
         });
       }
     }
-  }, [addresses, userLocation, showBubble]);
+  }, [addresses, userLocation, showBubble, colorScheme]);
 
   // Handle Focus Address
   useEffect(() => {
@@ -274,7 +277,10 @@ const HereMap: React.FC<HereMapProps> = ({
       style={{
         width: "100%",
         height: "100%",
-        backgroundColor: "var(--mantine-color-gray-2)",
+        backgroundColor:
+          colorScheme === "dark"
+            ? "var(--mantine-color-dark-8)"
+            : "var(--mantine-color-gray-2)",
       }}
     />
   );

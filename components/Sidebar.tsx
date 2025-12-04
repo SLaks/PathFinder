@@ -22,6 +22,7 @@ import {
   Title,
   Paper,
   UnstyledButton,
+  useMantineColorScheme,
 } from "@mantine/core";
 import { Address, GeoPoint, ImportStatus, SheetConfig } from "../types";
 import { parseAddressesFromText } from "../services/addressService";
@@ -65,6 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onFocusAddress,
   onHoverAddress,
 }) => {
+  const { colorScheme } = useMantineColorScheme();
   const [inputText, setInputText] = useState("");
   const [importStatus, setImportStatus] = useState<ImportStatus>(
     ImportStatus.IDLE,
@@ -266,9 +268,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     <Stack
       h="100%"
       gap={0}
-      bg="white"
+      bg={colorScheme === "dark" ? "dark.7" : "white"}
       style={{
-        borderRight: "1px solid var(--mantine-color-gray-3)",
+        borderRight:
+          colorScheme === "dark"
+            ? "1px solid var(--mantine-color-dark-4)"
+            : "1px solid var(--mantine-color-gray-3)",
         boxShadow: "var(--mantine-shadow-xl)",
       }}
     >
@@ -307,19 +312,21 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Paper
               withBorder
               radius="md"
-              bg="gray.0"
+              bg={colorScheme === "dark" ? "dark.6" : "gray.0"}
               style={{ overflow: "hidden" }}
             >
               {/* Header */}
               <Group
                 p="xs"
-                bg="white"
+                bg={colorScheme === "dark" ? "dark.7" : "white"}
                 justify="space-between"
                 onClick={() => setIsSourceExpanded(!isSourceExpanded)}
                 style={{
                   cursor: "pointer",
                   borderBottom: isSourceExpanded
-                    ? "1px solid var(--mantine-color-gray-3)"
+                    ? colorScheme === "dark"
+                      ? "1px solid var(--mantine-color-dark-4)"
+                      : "1px solid var(--mantine-color-gray-3)"
                     : "none",
                 }}
               >
@@ -492,7 +499,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               <Box
                 p="xl"
                 style={{
-                  border: "2px dashed var(--mantine-color-gray-3)",
+                  border:
+                    colorScheme === "dark"
+                      ? "2px dashed var(--mantine-color-dark-4)"
+                      : "2px dashed var(--mantine-color-gray-3)",
                   borderRadius: "var(--mantine-radius-md)",
                   textAlign: "center",
                 }}
@@ -551,8 +561,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Footer */}
       <Box
         p="md"
-        bg="gray.0"
-        style={{ borderTop: "1px solid var(--mantine-color-gray-3)" }}
+        bg={colorScheme === "dark" ? "dark.6" : "gray.0"}
+        style={{
+          borderTop:
+            colorScheme === "dark"
+              ? "1px solid var(--mantine-color-dark-4)"
+              : "1px solid var(--mantine-color-gray-3)",
+        }}
       >
         <Stack gap="sm">
           {isGeocoding && (

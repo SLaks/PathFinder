@@ -11,9 +11,11 @@ import {
   Stack,
   UnstyledButton,
   rem,
+  useMantineColorScheme,
 } from "@mantine/core";
 import HereMap from "./components/HereMap";
 import Sidebar from "./components/Sidebar";
+import { DarkModeToggle } from "./components/DarkModeToggle";
 import { Address, GeoPoint } from "./types";
 import {
   getHereApiKey,
@@ -25,6 +27,7 @@ import { optimizeRoute } from "./services/routeService";
 import { separateAddressesByStatus } from "./services/addressService";
 
 const App: React.FC = () => {
+  const { colorScheme } = useMantineColorScheme();
   const [apiKey, setApiKey] = useState<string>("");
   const [keyInput, setKeyInput] = useState<string>("");
   const [showKeyModal, setShowKeyModal] = useState<boolean>(false);
@@ -154,7 +157,7 @@ const App: React.FC = () => {
       direction="column"
       h="100vh"
       w="100vw"
-      bg="gray.1"
+      bg={colorScheme === "dark" ? "dark.8" : "gray.1"}
       style={{ overflow: "hidden" }}
     >
       {/* API Key Modal */}
@@ -202,7 +205,7 @@ const App: React.FC = () => {
       <Flex flex={1} style={{ position: "relative", overflow: "hidden" }}>
         {/* Sidebar Container */}
         <Box
-          w={{ base: "100%", md: 384 }} // 384px = w-96
+          w={{ base: "100%", md: 384 }}
           h="100%"
           style={{
             zIndex: 20,
@@ -250,8 +253,8 @@ const App: React.FC = () => {
               pos="absolute"
               top={16}
               right={16}
-              bg="yellow.1"
-              c="yellow.9"
+              bg={colorScheme === "dark" ? "yellow.9" : "yellow.1"}
+              c={colorScheme === "dark" ? "yellow.1" : "yellow.9"}
               px="md"
               py="xs"
               style={{
@@ -263,6 +266,9 @@ const App: React.FC = () => {
               Waiting for location...
             </Box>
           )}
+          <Box pos="absolute" top={16} left={16} style={{ zIndex: 10 }}>
+            <DarkModeToggle />
+          </Box>
         </Box>
       </Flex>
 
@@ -270,9 +276,12 @@ const App: React.FC = () => {
       <Group
         hiddenFrom="md"
         h={64}
-        bg="white"
+        bg={colorScheme === "dark" ? "dark.6" : "white"}
         style={{
-          borderTop: "1px solid var(--mantine-color-gray-3)",
+          borderTop:
+            colorScheme === "dark"
+              ? "1px solid var(--mantine-color-dark-4)"
+              : "1px solid var(--mantine-color-gray-3)",
           flexShrink: 0,
           zIndex: 30,
           boxShadow: "0 -2px 10px rgba(0,0,0,0.05)",
