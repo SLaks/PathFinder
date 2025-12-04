@@ -205,7 +205,6 @@ const App: React.FC = () => {
           w={{ base: "100%", md: 384 }} // 384px = w-96
           h="100%"
           style={{
-            display: mobileTab === "list" ? "block" : "none",
             zIndex: 20,
           }}
           display={{

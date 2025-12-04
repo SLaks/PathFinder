@@ -36,6 +36,7 @@ import {
   updateSheetStatus,
   selectAndSyncSheet,
   SheetPickerResult,
+  SheetSyncResult,
 } from "../services/sheetIntegrationService";
 import { SheetInfo } from "../services/googleSheetService";
 import { createGoogleMapsNavigationLink } from "../services/routeService";
@@ -177,12 +178,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       if (targetConfig) {
         setImportStatus(ImportStatus.PARSING);
         const result = await syncSheetData(targetConfig);
-
-        setAddresses(result.addresses);
-        setSheetConfig(result.config);
-        setStatusColumnIndex(result.statusColumnIndex);
-        setImportStatus(ImportStatus.SUCCESS);
-        setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
+        selectSheet(result);
       }
     } catch (error) {
       console.error("Google Sheet Error:", error);
@@ -208,12 +204,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         pendingSpreadsheetName,
         sheet,
       );
-
-      setAddresses(result.addresses);
-      setSheetConfig(result.config);
-      setStatusColumnIndex(result.statusColumnIndex);
-      setImportStatus(ImportStatus.SUCCESS);
-      setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
+      selectSheet(result);
     } catch (error) {
       console.error("Error selecting sheet:", error);
       alert("Failed to load selected sheet.");
@@ -221,6 +212,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     } finally {
       setIsSyncing(false);
     }
+  };
+
+  const selectSheet = async (result: SheetSyncResult) => {
+    setAddresses(result.addresses);
+    setSheetConfig(result.config);
+    setStatusColumnIndex(result.statusColumnIndex);
+    setImportStatus(ImportStatus.SUCCESS);
+    setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
   };
 
   const getGoogleMapsLink = () => {
