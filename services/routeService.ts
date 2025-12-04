@@ -1,4 +1,4 @@
-import { Address, GeoPoint } from "../types";
+import { Address, GeoPoint, TransitMode } from "../types";
 import { calculateOptimalSequence, getRouteShape } from "./hereService";
 
 /**
@@ -19,16 +19,23 @@ export async function optimizeRoute(
   userLocation: GeoPoint,
   addresses: Address[],
   apiKey: string,
+  transitMode: TransitMode = "car",
 ): Promise<OptimizedRoute> {
   // 1. Calculate optimal sequence
   const { sortedAddresses } = await calculateOptimalSequence(
     userLocation,
     addresses,
     apiKey,
+    transitMode,
   );
 
   // 2. Get route shape (polyline)
-  const routeShape = await getRouteShape(userLocation, sortedAddresses, apiKey);
+  const routeShape = await getRouteShape(
+    userLocation,
+    sortedAddresses,
+    apiKey,
+    transitMode,
+  );
 
   return {
     sortedAddresses,
@@ -39,8 +46,21 @@ export async function optimizeRoute(
 /**
  * Create Google Maps navigation link for an address
  */
-export function createGoogleMapsNavigationLink(address: Address): string {
+export function createGoogleMapsNavigationLink(
+  address: Address,
+  transitMode: TransitMode = "car",
+): string {
   if (!address.location) return "#";
 
-  return `https://www.google.com/maps/dir/?api=1&destination=${address.location.lat},${address.location.lng}&travelmode=driving`;
+  // Map our transit modes to Google Maps travel modes
+  const travelModeMap: Record<TransitMode, string> = {
+    car: "driving",
+    truck: "driving",
+    pedestrian: "walking",
+    bicycle: "bicycling",
+  };
+
+  const travelMode = travelModeMap[transitMode];
+
+  return `https://www.google.com/maps/dir/?api=1&destination=${address.location.lat},${address.location.lng}&travelmode=${travelMode}`;
 }

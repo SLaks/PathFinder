@@ -1,7 +1,8 @@
-import { SheetConfig } from "../types";
+import { SheetConfig, TransitMode } from "../types";
 
 const STORAGE_KEY_HERE_API = "here_api_key";
 const STORAGE_KEY_SHEET_CONFIG = "routeoptima_sheet_config";
+const STORAGE_KEY_TRANSIT_MODE = "routeoptima_transit_mode";
 
 /**
  * Storage Service
@@ -39,4 +40,13 @@ export function setSheetConfig(config: SheetConfig): void {
 
 export function removeSheetConfig(): void {
   localStorage.removeItem(STORAGE_KEY_SHEET_CONFIG);
+}
+
+// Transit Mode Management
+export function getTransitMode(): TransitMode | null {
+  return localStorage.getItem(STORAGE_KEY_TRANSIT_MODE) as TransitMode | null;
+}
+
+export function setTransitMode(mode: TransitMode): void {
+  localStorage.setItem(STORAGE_KEY_TRANSIT_MODE, mode);
 }

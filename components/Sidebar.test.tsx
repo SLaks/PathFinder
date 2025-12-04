@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MantineProvider } from "@mantine/core";
-import Sidebar from "./Sidebar";
+import Sidebar, { SidebarProps } from "./Sidebar";
 import { Address } from "../types";
 import * as addressService from "../services/addressService";
 import { AddressCardProps } from "./AddressCard";
@@ -36,7 +36,7 @@ const renderWithMantine = (ui: React.ReactNode) => {
 };
 
 describe("Sidebar", () => {
-  const defaultProps = {
+  const defaultProps: SidebarProps = {
     addresses: [],
     setAddresses: vi.fn(),
     onOptimize: vi.fn(),
@@ -46,6 +46,8 @@ describe("Sidebar", () => {
     onResetKey: vi.fn(),
     onFocusAddress: vi.fn(),
     onHoverAddress: vi.fn(),
+    onTransitModeChange: vi.fn(),
+    transitMode: "car",
   };
 
   beforeEach(() => {

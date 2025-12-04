@@ -16,15 +16,18 @@ import {
 import HereMap from "./components/HereMap";
 import Sidebar from "./components/Sidebar";
 import { DarkModeToggle } from "./components/DarkModeToggle";
-import { Address, GeoPoint } from "./types";
+import { Address, GeoPoint, TransitMode } from "./types";
 import {
   getHereApiKey,
   setHereApiKey as saveHereApiKey,
   removeHereApiKey,
+  getTransitMode,
+  setTransitMode as saveTransitMode,
 } from "./services/storageService";
 import { getUserLocation, geocodeAddresses } from "./services/locationService";
 import { optimizeRoute } from "./services/routeService";
 import { separateAddressesByStatus } from "./services/addressService";
+import { DEFAULT_TRANSIT_MODE } from "./utils/transitModes";
 
 const App: React.FC = () => {
   const { colorScheme } = useMantineColorScheme();
@@ -38,6 +41,8 @@ const App: React.FC = () => {
   const [routeShape, setRouteShape] = useState<string[]>([]);
   const [focusedAddressId, setFocusedAddressId] = useState<string | null>(null);
   const [hoveredAddressId, setHoveredAddressId] = useState<string | null>(null);
+  const [transitMode, setTransitMode] =
+    useState<TransitMode>(DEFAULT_TRANSIT_MODE);
 
   // Mobile UI State
   const [mobileTab, setMobileTab] = useState<"list" | "map">("list");
@@ -49,6 +54,12 @@ const App: React.FC = () => {
       setApiKey(storedKey);
     }
     setShowKeyModal(!storedKey);
+
+    // Load transit mode from storage
+    const storedMode = getTransitMode();
+    if (storedMode) {
+      setTransitMode(storedMode);
+    }
   }, []);
 
   // Get user location on mount
@@ -114,6 +125,7 @@ const App: React.FC = () => {
         userLocation,
         active,
         apiKey,
+        transitMode,
       );
 
       // Update state with sorted order, appending completed ones at the end
@@ -225,6 +237,11 @@ const App: React.FC = () => {
             onResetKey={handleResetKey}
             onFocusAddress={setFocusedAddressId}
             onHoverAddress={setHoveredAddressId}
+            transitMode={transitMode}
+            onTransitModeChange={(mode: TransitMode) => {
+              setTransitMode(mode);
+              saveTransitMode(mode);
+            }}
           />
         </Box>
 

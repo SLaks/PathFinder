@@ -23,8 +23,15 @@ import {
   Paper,
   UnstyledButton,
   useMantineColorScheme,
+  Menu,
 } from "@mantine/core";
-import { Address, GeoPoint, ImportStatus, SheetConfig } from "../types";
+import {
+  Address,
+  GeoPoint,
+  ImportStatus,
+  SheetConfig,
+  TransitMode,
+} from "../types";
 import { parseAddressesFromText } from "../services/addressService";
 import {
   getSheetConfig,
@@ -42,6 +49,7 @@ import {
 import { SheetInfo } from "../services/googleSheetService";
 import { createGoogleMapsNavigationLink } from "../services/routeService";
 import { AddressCard } from "./AddressCard";
+import { TRANSIT_MODES } from "../utils/transitModes";
 
 export interface SidebarProps {
   addresses: Address[];
@@ -53,6 +61,8 @@ export interface SidebarProps {
   onResetKey: () => void;
   onFocusAddress: (id: string) => void;
   onHoverAddress: (id: string | null) => void;
+  transitMode: TransitMode;
+  onTransitModeChange: (mode: TransitMode) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -65,6 +75,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onResetKey,
   onFocusAddress,
   onHoverAddress,
+  transitMode,
+  onTransitModeChange,
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const [inputText, setInputText] = useState("");
@@ -227,7 +239,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const getGoogleMapsLink = () => {
     if (!addresses.length) return "#";
     const nextStop = addresses[0];
-    return createGoogleMapsNavigationLink(nextStop);
+    return createGoogleMapsNavigationLink(nextStop, transitMode);
   };
 
   const handleToggleComplete = async (id: string, completed: boolean) => {
@@ -575,15 +587,58 @@ const Sidebar: React.FC<SidebarProps> = ({
               Geocoding addresses...
             </Text>
           )}
-          <Button
-            fullWidth
-            size="md"
-            onClick={onOptimize}
-            loading={isOptimizing}
-            disabled={isGeocoding || addresses.length < 2 || !userLocation}
-          >
-            Optimize Route
-          </Button>
+          <Group gap="xs">
+            <Menu shadow="md" width={200}>
+              <Menu.Target>
+                <Button
+                  variant="default"
+                  size="md"
+                  disabled={isGeocoding || isOptimizing}
+                  leftSection={
+                    <Icon
+                      path={
+                        TRANSIT_MODES.find((m) => m.mode === transitMode)
+                          ?.icon || TRANSIT_MODES[0].icon
+                      }
+                      size={0.8}
+                    />
+                  }
+                >
+                  {TRANSIT_MODES.find((m) => m.mode === transitMode)?.label ||
+                    "Car"}
+                </Button>
+              </Menu.Target>
+
+              <Menu.Dropdown>
+                <Menu.Label>Transit Mode</Menu.Label>
+                {TRANSIT_MODES.map((mode) => (
+                  <Menu.Item
+                    key={mode.mode}
+                    leftSection={<Icon path={mode.icon} size={0.7} />}
+                    onClick={() => onTransitModeChange(mode.mode)}
+                    bg={
+                      mode.mode === transitMode
+                        ? colorScheme === "dark"
+                          ? "dark.5"
+                          : "gray.1"
+                        : undefined
+                    }
+                  >
+                    {mode.label}
+                  </Menu.Item>
+                ))}
+              </Menu.Dropdown>
+            </Menu>
+            <Button
+              flex={1}
+              size="md"
+              onClick={onOptimize}
+              loading={isOptimizing}
+              disabled={isGeocoding || addresses.length < 2 || !userLocation}
+            >
+              Optimize Route
+            </Button>
+          </Group>
           {addresses.some((a) => a.sequenceOrder) && (
             <Button
               component="a"

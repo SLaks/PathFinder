@@ -1,4 +1,4 @@
-import { GeoPoint, Address } from "../types";
+import { GeoPoint, Address, TransitMode } from "../types";
 
 // HERE API Response Types
 interface HereWaypoint {
@@ -178,10 +178,11 @@ export const calculateOptimalSequence = async (
   start: GeoPoint,
   destinations: Address[],
   apiKey: string,
+  transitMode: TransitMode = "car",
 ): Promise<{ sortedAddresses: Address[] }> => {
   const url = new URL(SEQUENCE_URL);
   url.searchParams.append("apiKey", apiKey);
-  url.searchParams.append("mode", "fastest;car;traffic:disabled");
+  url.searchParams.append("mode", `fastest;${transitMode};traffic:disabled`);
   url.searchParams.append("start", `${start.lat},${start.lng}`);
 
   // Ensure we only send valid, geocoded locations and maintain strict indexing (destination1, destination2, etc.)
@@ -223,6 +224,7 @@ export const getRouteShape = async (
   start: GeoPoint,
   sortedWaypoints: Address[],
   apiKey: string,
+  transitMode: TransitMode = "car",
 ): Promise<string[]> => {
   if (sortedWaypoints.length > 0) {
     const last = sortedWaypoints[sortedWaypoints.length - 1];
@@ -230,7 +232,7 @@ export const getRouteShape = async (
 
     const v8Url = new URL(ROUTING_URL);
     v8Url.searchParams.append("apiKey", apiKey);
-    v8Url.searchParams.append("transportMode", "car");
+    v8Url.searchParams.append("transportMode", transitMode);
     v8Url.searchParams.append("origin", `${start.lat},${start.lng}`);
 
     intermediates.forEach((wp) => {

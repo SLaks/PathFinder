@@ -36,6 +36,8 @@ export enum ImportStatus {
   ERROR,
 }
 
+export type TransitMode = "car" | "truck" | "pedestrian" | "bicycle";
+
 export interface GoogleCreds {
   clientId: string;
   apiKey: string;
