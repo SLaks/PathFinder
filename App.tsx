@@ -1,4 +1,17 @@
 import React, { useState, useEffect } from "react";
+import {
+  Modal,
+  TextInput,
+  Button,
+  Text,
+  Anchor,
+  Box,
+  Flex,
+  Group,
+  Stack,
+  UnstyledButton,
+  rem,
+} from "@mantine/core";
 import HereMap from "./components/HereMap";
 import Sidebar from "./components/Sidebar";
 import { Address, GeoPoint } from "./types";
@@ -13,6 +26,7 @@ import { separateAddressesByStatus } from "./services/addressService";
 
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>("");
+  const [keyInput, setKeyInput] = useState<string>("");
   const [showKeyModal, setShowKeyModal] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState<GeoPoint | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -129,67 +143,75 @@ const App: React.FC = () => {
   const handleResetKey = () => {
     removeHereApiKey();
     setApiKey("");
+    setKeyInput("");
     setShowKeyModal(true);
     setAddresses([]);
     setRouteShape([]);
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-gray-100 overflow-hidden">
+    <Flex
+      direction="column"
+      h="100vh"
+      w="100vw"
+      bg="gray.1"
+      style={{ overflow: "hidden" }}
+    >
       {/* API Key Modal */}
-      {showKeyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm px-4">
-          <div className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full">
-            <h2 className="text-2xl font-bold mb-2 text-gray-900">
-              Enter HERE Maps API Key
-            </h2>
-            <p className="text-gray-600 mb-6 text-sm">
-              This application uses HERE Maps for geocoding, mapping, and route
-              optimization. You can get a free Freemium key from{" "}
-              <a
-                href="https://platform.here.com/"
-                target="_blank"
-                className="text-blue-600 underline"
-                rel="noreferrer"
-              >
-                developer.here.com
-              </a>
-              .
-            </p>
-            <input
-              type="text"
-              placeholder="Paste your API Key here"
-              className="w-full bg-slate-800 text-white placeholder-gray-400 border border-slate-700 p-3 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
-              onKeyDown={(e) => {
-                if (e.key === "Enter")
-                  handleSaveKey((e.target as HTMLInputElement).value);
-              }}
-            />
-            <button
-              onClick={(e) => {
-                // Simple hack to find the input value without controlled state for this simple modal
-                const input = e.currentTarget
-                  .previousElementSibling as HTMLInputElement;
-                handleSaveKey(input.value);
-              }}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+      <Modal
+        opened={showKeyModal}
+        onClose={() => {}}
+        withCloseButton={false}
+        centered
+        title="Enter HERE Maps API Key"
+        closeOnClickOutside={false}
+        closeOnEscape={false}
+        size="md"
+      >
+        <Stack>
+          <Text size="sm" c="dimmed">
+            This application uses HERE Maps for geocoding, mapping, and route
+            optimization. You can get a free Freemium key from{" "}
+            <Anchor
+              href="https://platform.here.com/"
+              target="_blank"
+              rel="noreferrer"
             >
-              Start App
-            </button>
-            <div className="mt-4 text-xs text-gray-400 text-center">
-              Your key is stored locally in your browser.
-            </div>
-          </div>
-        </div>
-      )}
+              developer.here.com
+            </Anchor>
+            .
+          </Text>
+          <TextInput
+            placeholder="Paste your API Key here"
+            value={keyInput}
+            onChange={(e) => setKeyInput(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSaveKey(keyInput);
+            }}
+          />
+          <Button onClick={() => handleSaveKey(keyInput)} fullWidth>
+            Start App
+          </Button>
+          <Text size="xs" c="dimmed" ta="center">
+            Your key is stored locally in your browser.
+          </Text>
+        </Stack>
+      </Modal>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex relative overflow-hidden">
+      <Flex flex={1} style={{ position: "relative", overflow: "hidden" }}>
         {/* Sidebar Container */}
-        <div
-          className={`w-full md:w-96 bg-white z-20 h-full flex-shrink-0 flex flex-col ${
-            mobileTab === "list" ? "block" : "hidden md:block"
-          }`}
+        <Box
+          w={{ base: "100%", md: 384 }} // 384px = w-96
+          h="100%"
+          style={{
+            display: mobileTab === "list" ? "block" : "none",
+            zIndex: 20,
+          }}
+          display={{
+            base: mobileTab === "list" ? "block" : "none",
+            md: "block",
+          }}
         >
           <Sidebar
             addresses={addresses}
@@ -202,13 +224,19 @@ const App: React.FC = () => {
             onFocusAddress={setFocusedAddressId}
             onHoverAddress={setHoveredAddressId}
           />
-        </div>
+        </Box>
 
         {/* Map Container */}
-        <div
-          className={`flex-1 h-full relative ${
-            mobileTab === "map" ? "block" : "hidden md:block"
-          }`}
+        <Box
+          flex={1}
+          h="100%"
+          style={{
+            position: "relative",
+          }}
+          display={{
+            base: mobileTab === "map" ? "block" : "none",
+            md: "block",
+          }}
         >
           <HereMap
             apiKey={apiKey}
@@ -219,22 +247,51 @@ const App: React.FC = () => {
             hoveredAddressId={hoveredAddressId}
           />
           {!userLocation && !showKeyModal && (
-            <div className="absolute top-4 right-4 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-md text-sm font-medium shadow-sm z-10">
+            <Box
+              pos="absolute"
+              top={16}
+              right={16}
+              bg="yellow.1"
+              c="yellow.9"
+              px="md"
+              py="xs"
+              style={{
+                borderRadius: "var(--mantine-radius-md)",
+                zIndex: 10,
+                boxShadow: "var(--mantine-shadow-sm)",
+              }}
+            >
               Waiting for location...
-            </div>
+            </Box>
           )}
-        </div>
-      </div>
+        </Box>
+      </Flex>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden bg-white border-t border-gray-200 flex h-16 shrink-0 z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-        <button
+      <Group
+        hiddenFrom="md"
+        h={64}
+        bg="white"
+        style={{
+          borderTop: "1px solid var(--mantine-color-gray-3)",
+          flexShrink: 0,
+          zIndex: 30,
+          boxShadow: "0 -2px 10px rgba(0,0,0,0.05)",
+        }}
+        gap={0}
+      >
+        <UnstyledButton
+          flex={1}
+          h="100%"
+          c={mobileTab === "list" ? "blue" : "gray.6"}
           onClick={() => setMobileTab("list")}
-          className={`flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors ${
-            mobileTab === "list"
-              ? "text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: rem(4),
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -254,15 +311,22 @@ const App: React.FC = () => {
             <line x1="3" y1="12" x2="3.01" y2="12"></line>
             <line x1="3" y1="18" x2="3.01" y2="18"></line>
           </svg>
-          Addresses
-        </button>
-        <button
+          <Text size="xs" fw={500}>
+            Addresses
+          </Text>
+        </UnstyledButton>
+        <UnstyledButton
+          flex={1}
+          h="100%"
+          c={mobileTab === "map" ? "blue" : "gray.6"}
           onClick={() => setMobileTab("map")}
-          className={`flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors ${
-            mobileTab === "map"
-              ? "text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: rem(4),
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -279,10 +343,12 @@ const App: React.FC = () => {
             <line x1="8" y1="2" x2="8" y2="18"></line>
             <line x1="16" y1="6" x2="16" y2="22"></line>
           </svg>
-          Map
-        </button>
-      </div>
-    </div>
+          <Text size="xs" fw={500}>
+            Map
+          </Text>
+        </UnstyledButton>
+      </Group>
+    </Flex>
   );
 };
 

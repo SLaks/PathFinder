@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { renderToString } from "react-dom/server";
+import { MantineProvider } from "@mantine/core";
 import { Address, GeoPoint } from "../types";
 import "@here/maps-api-for-javascript";
 import { getAddressColor } from "../utils/colors";
 import { getInitials } from "../utils/formatters";
 import { AddressCard } from "./AddressCard";
+import { theme } from "../theme";
 
 interface HereMapProps {
   apiKey: string;
@@ -38,13 +40,15 @@ const HereMap: React.FC<HereMapProps> = ({
       uiRef.current.getBubbles().forEach((b) => uiRef.current!.removeBubble(b));
 
       const content = renderToString(
-        <div className="p-2">
-          <AddressCard
-            address={addr}
-            index={addresses.indexOf(addr)}
-            isCompact
-          />
-        </div>,
+        <MantineProvider theme={theme}>
+          <div style={{ padding: "8px" }}>
+            <AddressCard
+              address={addr}
+              index={addresses.indexOf(addr)}
+              isCompact
+            />
+          </div>
+        </MantineProvider>,
       );
 
       const point = marker.getGeometry() as H.geo.Point;
@@ -264,7 +268,16 @@ const HereMap: React.FC<HereMapProps> = ({
     }
   }, [routeShape]);
 
-  return <div ref={mapRef} className="w-full h-full bg-gray-200" />;
+  return (
+    <div
+      ref={mapRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        backgroundColor: "var(--mantine-color-gray-2)",
+      }}
+    />
+  );
 };
 
 export default HereMap;

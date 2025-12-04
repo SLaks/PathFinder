@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MantineProvider } from "@mantine/core";
 import Sidebar from "./Sidebar";
 import { Address } from "../types";
 import * as addressService from "../services/addressService";
 import { AddressCardProps } from "./AddressCard";
+import { theme } from "../theme";
 
 // Mock services
 vi.mock("../services/addressService", () => ({
@@ -29,6 +31,10 @@ vi.mock("./AddressCard", () => ({
   ),
 }));
 
+const renderWithMantine = (ui: React.ReactNode) => {
+  return render(<MantineProvider theme={theme}>{ui}</MantineProvider>);
+};
+
 describe("Sidebar", () => {
   const defaultProps = {
     addresses: [],
@@ -47,7 +53,7 @@ describe("Sidebar", () => {
   });
 
   it("should render correctly", () => {
-    render(<Sidebar {...defaultProps} />);
+    renderWithMantine(<Sidebar {...defaultProps} />);
     expect(screen.getByText("RouteOptima")).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText(/Paste addresses here/),
@@ -60,7 +66,7 @@ describe("Sidebar", () => {
       mockAddresses,
     );
 
-    render(<Sidebar {...defaultProps} />);
+    renderWithMantine(<Sidebar {...defaultProps} />);
 
     const input = screen.getByPlaceholderText(/Paste addresses here/);
     fireEvent.change(input, { target: { value: "123 Main St" } });
@@ -77,8 +83,8 @@ describe("Sidebar", () => {
   });
 
   it("should disable optimize button when not ready", () => {
-    render(<Sidebar {...defaultProps} addresses={[]} />);
-    const button = screen.getByText("Optimize Route");
+    renderWithMantine(<Sidebar {...defaultProps} addresses={[]} />);
+    const button = screen.getByRole("button", { name: /Optimize Route/i });
     expect(button).toBeDisabled();
   });
 
@@ -87,8 +93,8 @@ describe("Sidebar", () => {
       { id: "1", originalText: "A" },
       { id: "2", originalText: "B" },
     ] as Address[];
-    render(<Sidebar {...defaultProps} addresses={addresses} />);
-    const button = screen.getByText("Optimize Route");
+    renderWithMantine(<Sidebar {...defaultProps} addresses={addresses} />);
+    const button = screen.getByRole("button", { name: /Optimize Route/i });
     expect(button).not.toBeDisabled();
   });
 
@@ -97,9 +103,9 @@ describe("Sidebar", () => {
       { id: "1", originalText: "A" },
       { id: "2", originalText: "B" },
     ] as Address[];
-    render(<Sidebar {...defaultProps} addresses={addresses} />);
+    renderWithMantine(<Sidebar {...defaultProps} addresses={addresses} />);
 
-    const button = screen.getByText("Optimize Route");
+    const button = screen.getByRole("button", { name: /Optimize Route/i });
     fireEvent.click(button);
     expect(defaultProps.onOptimize).toHaveBeenCalled();
   });
@@ -109,7 +115,7 @@ describe("Sidebar", () => {
       { id: "1", originalText: "Address 1" },
       { id: "2", originalText: "Address 2" },
     ] as Address[];
-    render(<Sidebar {...defaultProps} addresses={addresses} />);
+    renderWithMantine(<Sidebar {...defaultProps} addresses={addresses} />);
 
     expect(screen.getAllByTestId("address-card")).toHaveLength(2);
     expect(screen.getByText("Address 1")).toBeInTheDocument();
@@ -117,7 +123,7 @@ describe("Sidebar", () => {
 
   it("should call onFocusAddress when address is clicked", () => {
     const addresses = [{ id: "1", originalText: "Address 1" }] as Address[];
-    render(<Sidebar {...defaultProps} addresses={addresses} />);
+    renderWithMantine(<Sidebar {...defaultProps} addresses={addresses} />);
 
     const card = screen.getByTestId("address-card");
     fireEvent.click(card);

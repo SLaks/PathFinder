@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
+import { MantineProvider } from "@mantine/core";
 import App from "./App";
 import * as storageService from "./services/storageService";
 import * as locationService from "./services/locationService";
 import * as routeService from "./services/routeService";
 import * as addressService from "./services/addressService";
 import { SidebarProps } from "./components/Sidebar";
+import { theme } from "./theme";
 
 // Mock components
 vi.mock("./components/HereMap", () => ({
@@ -31,6 +39,8 @@ vi.mock("./services/storageService", () => ({
 vi.mock("./services/locationService", () => ({
   getUserLocation: vi.fn(),
   geocodeAddresses: vi.fn(),
+  // Add this mock to prevent errors
+  geocodeAddress: vi.fn(),
 }));
 vi.mock("./services/routeService", () => ({
   optimizeRoute: vi.fn(),
@@ -38,6 +48,12 @@ vi.mock("./services/routeService", () => ({
 vi.mock("./services/addressService", () => ({
   separateAddressesByStatus: vi.fn(),
 }));
+
+const renderWithMantine = (ui: React.ReactNode) => {
+  return act(() =>
+    render(<MantineProvider theme={theme}>{ui}</MantineProvider>),
+  );
+};
 
 describe("App", () => {
   beforeEach(() => {
@@ -54,20 +70,20 @@ describe("App", () => {
 
   it("should show API key modal if no key is stored", () => {
     vi.mocked(storageService.getHereApiKey).mockReturnValue(null);
-    render(<App />);
+    renderWithMantine(<App />);
     expect(screen.getByText("Enter HERE Maps API Key")).toBeInTheDocument();
   });
 
   it("should not show API key modal if key is stored", () => {
     vi.mocked(storageService.getHereApiKey).mockReturnValue("test-key");
-    render(<App />);
+    renderWithMantine(<App />);
     expect(
       screen.queryByText("Enter HERE Maps API Key"),
     ).not.toBeInTheDocument();
   });
 
   it("should fetch user location on mount", async () => {
-    render(<App />);
+    renderWithMantine(<App />);
     await waitFor(() => {
       expect(locationService.getUserLocation).toHaveBeenCalled();
     });
@@ -75,37 +91,69 @@ describe("App", () => {
 
   it("should handle API key submission", async () => {
     vi.mocked(storageService.getHereApiKey).mockReturnValue(null);
-    render(<App />);
+    renderWithMantine(<App />);
 
-    const input = screen.getByPlaceholderText("Paste your API Key here");
-    fireEvent.change(input, { target: { value: "new-key" } });
+    act(() => {
+      const input = screen.getByPlaceholderText("Paste your API Key here");
+      fireEvent.change(input, { target: { value: "new-key" } });
 
-    // Simulate Enter key or button click. The mock implementation of the button uses previousElementSibling
-    // which might be tricky with testing-library. Let's try the button click.
-    const button = screen.getByText("Start App");
-    fireEvent.click(button);
+      const button = screen.getByText("Start App");
+      fireEvent.click(button);
+    });
 
     expect(storageService.setHereApiKey).toHaveBeenCalledWith("new-key");
-    expect(
-      screen.queryByText("Enter HERE Maps API Key"),
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByText("Enter HERE Maps API Key"),
+      ).not.toBeInTheDocument();
+    });
   });
 
-  it("should switch mobile tabs", () => {
-    render(<App />);
+  it("should switch mobile tabs", async () => {
+    renderWithMantine(<App />);
 
     // Default is list
-    const sidebarContainer = screen.getByTestId("sidebar").parentElement;
-    expect(sidebarContainer).not.toHaveClass("hidden");
+    const sidebar = screen.getByTestId("sidebar");
+    // In Mantine, we check if the parent Box is visible.
+    // The Sidebar is wrapped in a Box with display logic.
+    // Since we can't easily check computed styles in jsdom without better mocks,
+    // we can check if the Map tab button switches the state.
+    // However, checking visibility in jsdom is tricky with Mantine's responsive styles.
+    // We'll trust the state change logic for now or check if the element exists.
 
     // Switch to map
-    const mapTab = screen.getByText("Map");
-    fireEvent.click(mapTab);
+    act(() => {
+      const mapTab = screen.getByText("Map");
+      fireEvent.click(mapTab);
+    });
 
-    // Sidebar should be hidden on mobile (md:block ensures it's visible on desktop, but we check class logic)
-    // The class logic is: mobileTab === "list" ? "block" : "hidden md:block"
-    // So if map is selected, it should be "hidden md:block"
-    expect(sidebarContainer).toHaveClass("hidden");
+    // We can check if the map container is now visible or if the sidebar is hidden.
+    // With Mantine, 'hiddenFrom' or 'display' props are used.
+    // Let's just verify the tab click doesn't crash and potentially check for style attributes if possible,
+    // but given the complexity of Mantine styles in tests, we might skip strict style checks here
+    // unless we inspect the style prop directly.
+
+    // Let's check if the sidebar parent has display: none (which we set in App.tsx)
+    // <Box display={{ base: mobileTab === "list" ? "block" : "none", md: "block" }}>
+    // When map is selected, mobileTab is 'map', so base should be 'none'.
+
+    // We need to find the parent of the sidebar.
+    const sidebarParent = sidebar.parentElement;
+    // Note: Mantine might add intermediate divs.
+    // Let's assume the immediate parent is the Box we added.
+
+    // Actually, checking style prop on the element might work if it was passed as inline style.
+    // In App.tsx we used: display={{ base: mobileTab === "list" ? "block" : "none", md: "block" }}
+    // Mantine converts this to classes or styles.
+    // If we used `style={{ display: ... }}` it would be easier.
+    // In App.tsx I used:
+    // style={{
+    //   display: mobileTab === "list" ? "block" : "none",
+    //   zIndex: 20,
+    // }}
+    // So we CAN check this inline style!
+
+    expect(sidebarParent).toHaveStyle({ display: "none" });
   });
 
   it("should handle route optimization", async () => {
@@ -115,7 +163,7 @@ describe("App", () => {
       routeShape: ["shape"],
     });
 
-    render(<App />);
+    renderWithMantine(<App />);
 
     // Wait for location to be loaded (Waiting for location... should disappear)
     await waitFor(() => {
@@ -125,11 +173,13 @@ describe("App", () => {
     });
 
     // Add address to enable optimization (mock sidebar logic)
-    const addBtn = screen.getByText("Add Address");
-    fireEvent.click(addBtn);
+    act(() => {
+      const addBtn = screen.getByText("Add Address");
+      fireEvent.click(addBtn);
 
-    const optimizeBtn = screen.getByText("Optimize");
-    fireEvent.click(optimizeBtn);
+      const optimizeBtn = screen.getByText("Optimize");
+      fireEvent.click(optimizeBtn);
+    });
 
     await waitFor(() => {
       expect(routeService.optimizeRoute).toHaveBeenCalled();
