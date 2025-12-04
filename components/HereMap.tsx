@@ -283,8 +283,23 @@ const HereMap: React.FC<HereMapProps> = ({
             ? "var(--mantine-color-dark-8)"
             : "var(--mantine-color-gray-2)",
       }}
-    />
+    >
+      <style>{colorScheme === "dark" ? darkModeStyles : ""}</style>
+    </div>
   );
 };
 
+// Here offers no options to style the bubble colors, so we override it for dark mode.
+const darkModeStyles = `
+.H_ib.H_ib_top .H_ib_tail::after {
+  /* The lower triangle */
+  border-color: var(--mantine-color-dark-5) transparent !important;
+}
+.H_ib_body {
+  background-color: var(--mantine-color-dark-5) !important;
+}
+.H_ib_content {
+  color: var(--mantine-color-gray-0) !important;
+}
+`;
 export default HereMap;

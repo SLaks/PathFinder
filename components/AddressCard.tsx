@@ -63,7 +63,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
           ? colorScheme === "dark"
             ? "var(--mantine-color-blue-9)"
             : "var(--mantine-color-blue-0)"
-          : undefined,
+          : "transparent", // We use a custom color for bubble backgrounds.
         borderColor: isError
           ? colorScheme === "dark"
             ? "var(--mantine-color-red-7)"
