@@ -11,7 +11,7 @@ test.describe("Source selection visual tests", () => {
     await expect(page.getByText("Paste Text")).toBeVisible();
 
     // Screenshot the data source section
-    const sourceSection = page.locator('text="Data Source"').locator('../..');
+    const sourceSection = page.locator('text="Data Source"').locator("../..");
     await expect(sourceSection).toHaveScreenshot("source-section-expanded.png");
   });
 
@@ -24,8 +24,10 @@ test.describe("Source selection visual tests", () => {
     await textarea.fill("Sample address text");
 
     // Screenshot with text in the textarea
-    const sourceSection = page.locator('text="Data Source"').locator('../..');
-    await expect(sourceSection).toHaveScreenshot("source-section-with-text.png");
+    const sourceSection = page.locator('text="Data Source"').locator("../..");
+    await expect(sourceSection).toHaveScreenshot(
+      "source-section-with-text.png",
+    );
   });
 
   test("Google Sheets section", async ({ page }) => {
@@ -33,7 +35,7 @@ test.describe("Source selection visual tests", () => {
     await expect(page.getByText("RouteOptima")).toBeVisible();
 
     // Find the Google Sheets section
-    const sheetsSection = page.locator('text="Google Sheets"').locator('..');
+    const sheetsSection = page.locator('text="Google Sheets"').locator("..");
     await expect(sheetsSection).toBeVisible();
 
     // Screenshot just the Google Sheets part
@@ -45,12 +47,12 @@ test.describe("Source selection visual tests", () => {
     await expect(page.getByText("RouteOptima")).toBeVisible();
 
     const parseButton = page.getByRole("button", { name: "Parse Text" });
-    
+
     // Initially disabled (no text)
     await expect(parseButton).toBeDisabled();
 
     // Screenshot disabled state
-    const buttonArea = parseButton.locator('..');
+    const buttonArea = parseButton.locator("..");
     await expect(buttonArea).toHaveScreenshot("parse-button-disabled.png");
 
     // Add text to enable
@@ -71,11 +73,13 @@ test.describe("Source selection visual tests", () => {
 
     // Wait for success message
     await page.waitForTimeout(500);
-    
+
     // Try to catch the success state (it disappears after 3 seconds)
     const successMessage = page.getByText("Imported!");
     if (await successMessage.isVisible()) {
-      const buttonArea = page.getByRole("button", { name: "Parse Text" }).locator('..');
+      const buttonArea = page
+        .getByRole("button", { name: "Parse Text" })
+        .locator("..");
       await expect(buttonArea).toHaveScreenshot("parse-success-feedback.png");
     }
   });
@@ -88,7 +92,9 @@ test.describe("Source selection visual tests", () => {
     await expect(page.getByText(/Stops \(0\)/)).toBeVisible();
 
     // Add addresses
-    await page.getByPlaceholder(/Paste addresses here/).fill("Addr 1\\nAddr 2\\nAddr 3");
+    await page
+      .getByPlaceholder(/Paste addresses here/)
+      .fill("Addr 1\\nAddr 2\\nAddr 3");
     await page.getByRole("button", { name: "Parse Text" }).click();
     await page.waitForTimeout(1000);
 
@@ -97,6 +103,8 @@ test.describe("Source selection visual tests", () => {
     await expect(stopsHeader).toBeVisible();
 
     // Screenshot the stops section header
-    await expect(stopsHeader.locator('..')).toHaveScreenshot("stops-header-with-count.png");
+    await expect(stopsHeader.locator("..")).toHaveScreenshot(
+      "stops-header-with-count.png",
+    );
   });
 });

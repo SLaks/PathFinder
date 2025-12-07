@@ -10,20 +10,23 @@ export const test = base.extend({
     });
 
     // Mock HERE Geocoding API
-    await page.route("**/geocode.search.hereapi.com/v1/geocode*", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          items: [
-            {
-              position: { lat: 40.7128, lng: -74.006 },
-              address: { label: "Mock Address, New York, NY" },
-            },
-          ],
-        }),
-      });
-    });
+    await page.route(
+      "**/geocode.search.hereapi.com/v1/geocode*",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            items: [
+              {
+                position: { lat: 40.7128, lng: -74.006 },
+                address: { label: "Mock Address, New York, NY" },
+              },
+            ],
+          }),
+        });
+      },
+    );
 
     // Mock HERE Sequence API
     await page.route("**/wps.hereapi.com/v8/findsequence2*", async (route) => {
@@ -53,9 +56,7 @@ export const test = base.extend({
         body: JSON.stringify({
           routes: [
             {
-              sections: [
-                { polyline: "mock_polyline_data" },
-              ],
+              sections: [{ polyline: "mock_polyline_data" }],
             },
           ],
         }),

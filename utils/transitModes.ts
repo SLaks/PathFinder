@@ -1,9 +1,4 @@
-import {
-  mdiCar,
-  mdiTruck,
-  mdiWalk,
-  mdiBike,
-} from "@mdi/js";
+import { mdiCar, mdiTruck, mdiWalk, mdiBike } from "@mdi/js";
 import { TransitMode } from "../types";
 
 export interface TransitModeInfo {

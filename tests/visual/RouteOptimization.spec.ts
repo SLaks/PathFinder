@@ -6,11 +6,13 @@ test.describe("Route optimization visual tests", () => {
     await expect(page.getByText("RouteOptima")).toBeVisible();
 
     // The optimize button should be disabled with no addresses
-    const optimizeButton = page.getByRole("button", { name: /Optimize Route/i });
+    const optimizeButton = page.getByRole("button", {
+      name: /Optimize Route/i,
+    });
     await expect(optimizeButton).toBeDisabled();
 
     // Screenshot the footer with disabled button
-    const footer = page.locator('text="Optimize Route"').locator('../..');
+    const footer = page.locator('text="Optimize Route"').locator("../..");
     await expect(footer).toHaveScreenshot("optimize-button-disabled.png");
   });
 
@@ -25,7 +27,9 @@ test.describe("Route optimization visual tests", () => {
     await page.waitForTimeout(1000);
 
     // Button should still be disabled (need at least 2 addresses)
-    const optimizeButton = page.getByRole("button", { name: /Optimize Route/i });
+    const optimizeButton = page.getByRole("button", {
+      name: /Optimize Route/i,
+    });
     await expect(optimizeButton).toBeDisabled();
   });
 
@@ -35,14 +39,18 @@ test.describe("Route optimization visual tests", () => {
 
     // Add multiple addresses
     const textarea = page.getByPlaceholder(/Paste addresses here/);
-    await textarea.fill("123 Main St, City\\n456 Oak Ave, Town\\n789 Pine Rd, Village");
+    await textarea.fill(
+      "123 Main St, City\\n456 Oak Ave, Town\\n789 Pine Rd, Village",
+    );
     await page.getByRole("button", { name: "Parse Text" }).click();
-    
+
     // Wait for geocoding to finish (button is disabled while geocoding)
-    await expect(page.getByText("Finding location...")).not.toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Finding location...")).not.toBeVisible({
+      timeout: 10000,
+    });
 
     // Screenshot the footer with enabled button
-    const footer = page.locator('text="Optimize Route"').locator('../..');
+    const footer = page.locator('text="Optimize Route"').locator("../..");
     await expect(footer).toHaveScreenshot("optimize-button-enabled.png");
   });
 
@@ -75,7 +83,7 @@ test.describe("Route optimization visual tests", () => {
     await page.waitForTimeout(1000);
 
     // Screenshot with Clear button visible
-    const stopsSection = page.locator('text="Stops"').locator('..');
+    const stopsSection = page.locator('text="Stops"').locator("..");
     await expect(stopsSection).toHaveScreenshot("stops-with-clear-button.png");
   });
 });
