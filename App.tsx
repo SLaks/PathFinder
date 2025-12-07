@@ -166,6 +166,7 @@ const App: React.FC = () => {
 
   return (
     <Flex
+      id="app-root"
       direction="column"
       h="100vh"
       w="100vw"
@@ -217,6 +218,7 @@ const App: React.FC = () => {
       <Flex flex={1} style={{ position: "relative", overflow: "hidden" }}>
         {/* Sidebar Container */}
         <Box
+          id="sidebar-container"
           w={{ base: "100%", md: 384 }}
           h="100%"
           style={{
@@ -247,6 +249,7 @@ const App: React.FC = () => {
 
         {/* Map Container */}
         <Box
+          id="map-container"
           flex={1}
           h="100%"
           style={{
@@ -267,6 +270,7 @@ const App: React.FC = () => {
           />
           {!userLocation && !showKeyModal && (
             <Box
+              className="print-hidden"
               pos="absolute"
               top={16}
               right={16}
@@ -283,7 +287,13 @@ const App: React.FC = () => {
               Waiting for location...
             </Box>
           )}
-          <Box pos="absolute" top={16} left={16} style={{ zIndex: 10 }}>
+          <Box
+            className="print-hidden"
+            pos="absolute"
+            top={16}
+            left={16}
+            style={{ zIndex: 10 }}
+          >
             <DarkModeToggle />
           </Box>
         </Box>
@@ -291,6 +301,7 @@ const App: React.FC = () => {
 
       {/* Mobile Bottom Navigation */}
       <Group
+        className="print-hidden"
         hiddenFrom="md"
         h={64}
         bg={colorScheme === "dark" ? "dark.6" : "white"}

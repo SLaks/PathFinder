@@ -4,6 +4,7 @@ import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import App from "./App";
 import { theme } from "./theme";
+import "./print.css";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {

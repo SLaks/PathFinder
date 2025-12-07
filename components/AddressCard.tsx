@@ -85,6 +85,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
             label={`Updates column: ${statusColumnName}`}
             disabled={!statusColumnName}
             withArrow
+            className="print-hidden"
           >
             <Checkbox
               checked={!!address.completed}
@@ -112,6 +113,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
               fontWeight: "bold",
               fontSize: 12,
               flexShrink: 0,
+              "-webkit-print-color-adjust": "exact",
             }}
           >
             {isLoading ? <Loader size={16} color="white" /> : initials}

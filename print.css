@@ -1,0 +1,73 @@
+@media print {
+  /* Global resets for print */
+  @page {
+    size: auto;
+    margin: 0mm;
+  }
+
+  body,
+  html,
+  #root {
+    background-color: white !important;
+    color: black !important;
+    height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Hide elements marked as print-hidden */
+  .print-hidden {
+    display: none !important;
+  }
+
+  /* Force light mode colors */
+  :root {
+    --mantine-color-scheme: light !important;
+    --mantine-color-text: #000 !important;
+    --mantine-color-body: #fff !important;
+  }
+
+  /* Ensure main layout is visible */
+  #app-root {
+    height: auto !important;
+    overflow: visible !important;
+    background-color: white !important;
+    display: block !important; /* Break flex layout for print flow */
+  }
+
+  /* Sidebar styling */
+  #sidebar-container {
+    display: block !important;
+    width: 400px !important;
+    height: auto !important;
+    position: static !important;
+    overflow: visible !important;
+    border: none !important;
+    .mantine-Stack-root {
+      box-shadow: none !important;
+    }
+  }
+
+  /* Map styling */
+  #map-container {
+    display: block !important;
+    width: 100% !important;
+    height: 100vh !important; /* Fill the page */
+    position: static !important;
+    page-break-inside: avoid;
+    border: 1px solid #ccc !important;
+    margin-top: 0;
+    flex-basis: auto !important;
+  }
+
+  /* Address list specific adjustments */
+  #address-list-container {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Hide scrollbars */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}

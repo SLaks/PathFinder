@@ -290,7 +290,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       }}
     >
       {/* Header */}
-      <Box p="md" bg="blue.6" c="white">
+      <Box p="md" bg="blue.6" c="white" className="print-hidden">
         <Group justify="space-between" align="flex-start">
           <Box>
             <Title order={1} size="h3">
@@ -314,10 +314,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         </Group>
       </Box>
 
-      <ScrollArea flex={1} p="md">
+      <ScrollArea flex={1} p="md" id="address-list-container">
         <Stack gap="lg">
           {/* Source Selection */}
-          <Stack gap="xs">
+          <Stack gap="xs" className="print-hidden">
             <Text size="lg" fw={600}>
               Data Source
             </Text>
@@ -500,7 +500,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* List */}
           <Stack gap="xs">
-            <Group justify="space-between">
+            <Group justify="space-between" className="print-hidden">
               <Text size="lg" fw={600}>
                 Stops ({addresses.length})
               </Text>
@@ -555,7 +555,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </Stack>
 
             {completedAddresses.length > 0 && (
-              <>
+              <div className="print-hidden">
                 <Divider label="Completed" labelPosition="left" />
                 <Stack
                   gap="xs"
@@ -580,7 +580,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     />
                   ))}
                 </Stack>
-              </>
+              </div>
             )}
           </Stack>
         </Stack>
@@ -596,6 +596,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               ? "1px solid var(--mantine-color-dark-4)"
               : "1px solid var(--mantine-color-gray-3)",
         }}
+        className="print-hidden"
       >
         <Stack gap="sm">
           {isGeocoding && (
