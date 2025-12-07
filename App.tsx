@@ -7,14 +7,13 @@ import {
   Anchor,
   Box,
   Flex,
-  Group,
   Stack,
-  UnstyledButton,
-  rem,
   useMantineColorScheme,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import HereMap from "./components/HereMap";
 import Sidebar from "./components/Sidebar";
+import { BottomSheet } from "./components/BottomSheet";
 import { DarkModeToggle } from "./components/DarkModeToggle";
 import { Address, GeoPoint, TransitMode } from "./types";
 import {
@@ -44,8 +43,7 @@ const App: React.FC = () => {
   const [transitMode, setTransitMode] =
     useState<TransitMode>(DEFAULT_TRANSIT_MODE);
 
-  // Mobile UI State
-  const [mobileTab, setMobileTab] = useState<"list" | "map">("list");
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Load API Key from storage
   useEffect(() => {
@@ -132,8 +130,7 @@ const App: React.FC = () => {
       setAddresses([...sortedAddresses, ...completed]);
       setRouteShape(shape);
 
-      // Switch to map view on mobile so user can see result
-      setMobileTab("map");
+      // No need to switch tabs anymore, map is always visible
     } catch (error: unknown) {
       console.error("Optimization failed", error);
       const errorMessage =
@@ -163,6 +160,25 @@ const App: React.FC = () => {
     setAddresses([]);
     setRouteShape([]);
   };
+
+  const sidebarContent = (
+    <Sidebar
+      addresses={addresses}
+      setAddresses={setAddresses}
+      onOptimize={handleOptimize}
+      isOptimizing={isOptimizing}
+      isGeocoding={isGeocoding}
+      userLocation={userLocation}
+      onResetKey={handleResetKey}
+      onFocusAddress={setFocusedAddressId}
+      onHoverAddress={setHoveredAddressId}
+      transitMode={transitMode}
+      onTransitModeChange={(mode: TransitMode) => {
+        setTransitMode(mode);
+        saveTransitMode(mode);
+      }}
+    />
+  );
 
   return (
     <Flex
@@ -216,36 +232,19 @@ const App: React.FC = () => {
 
       {/* Main Content Area */}
       <Flex flex={1} style={{ position: "relative", overflow: "hidden" }}>
-        {/* Sidebar Container */}
-        <Box
-          id="sidebar-container"
-          w={{ base: "100%", md: 384 }}
-          h="100%"
-          style={{
-            zIndex: 20,
-          }}
-          display={{
-            base: mobileTab === "list" ? "block" : "none",
-            md: "block",
-          }}
-        >
-          <Sidebar
-            addresses={addresses}
-            setAddresses={setAddresses}
-            onOptimize={handleOptimize}
-            isOptimizing={isOptimizing}
-            isGeocoding={isGeocoding}
-            userLocation={userLocation}
-            onResetKey={handleResetKey}
-            onFocusAddress={setFocusedAddressId}
-            onHoverAddress={setHoveredAddressId}
-            transitMode={transitMode}
-            onTransitModeChange={(mode: TransitMode) => {
-              setTransitMode(mode);
-              saveTransitMode(mode);
+        {/* Sidebar Container - Desktop */}
+        {!isMobile && (
+          <Box
+            id="sidebar-container"
+            w={384}
+            h="100%"
+            style={{
+              zIndex: 20,
             }}
-          />
-        </Box>
+          >
+            {sidebarContent}
+          </Box>
+        )}
 
         {/* Map Container */}
         <Box
@@ -254,10 +253,6 @@ const App: React.FC = () => {
           h="100%"
           style={{
             position: "relative",
-          }}
-          display={{
-            base: mobileTab === "map" ? "block" : "none",
-            md: "block",
           }}
         >
           <HereMap
@@ -299,91 +294,8 @@ const App: React.FC = () => {
         </Box>
       </Flex>
 
-      {/* Mobile Bottom Navigation */}
-      <Group
-        className="print-hidden"
-        hiddenFrom="md"
-        h={64}
-        bg={colorScheme === "dark" ? "dark.6" : "white"}
-        style={{
-          borderTop:
-            colorScheme === "dark"
-              ? "1px solid var(--mantine-color-dark-4)"
-              : "1px solid var(--mantine-color-gray-3)",
-          flexShrink: 0,
-          zIndex: 30,
-          boxShadow: "0 -2px 10px rgba(0,0,0,0.05)",
-        }}
-        gap={0}
-      >
-        <UnstyledButton
-          flex={1}
-          h="100%"
-          c={mobileTab === "list" ? "blue" : "gray.6"}
-          onClick={() => setMobileTab("list")}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: rem(4),
-          }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="8" y1="6" x2="21" y2="6"></line>
-            <line x1="8" y1="12" x2="21" y2="12"></line>
-            <line x1="8" y1="18" x2="21" y2="18"></line>
-            <line x1="3" y1="6" x2="3.01" y2="6"></line>
-            <line x1="3" y1="12" x2="3.01" y2="12"></line>
-            <line x1="3" y1="18" x2="3.01" y2="18"></line>
-          </svg>
-          <Text size="xs" fw={500}>
-            Addresses
-          </Text>
-        </UnstyledButton>
-        <UnstyledButton
-          flex={1}
-          h="100%"
-          c={mobileTab === "map" ? "blue" : "gray.6"}
-          onClick={() => setMobileTab("map")}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: rem(4),
-          }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-            <line x1="8" y1="2" x2="8" y2="18"></line>
-            <line x1="16" y1="6" x2="16" y2="22"></line>
-          </svg>
-          <Text size="xs" fw={500}>
-            Map
-          </Text>
-        </UnstyledButton>
-      </Group>
+      {/* Mobile Bottom Sheet */}
+      {isMobile && <BottomSheet minHeight={60}>{sidebarContent}</BottomSheet>}
     </Flex>
   );
 };
