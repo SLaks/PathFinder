@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect, useEffectEvent } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Box, Paper, rem } from "@mantine/core";
-import { useMove } from "@mantine/hooks";
 
 interface BottomSheetProps {
   children: React.ReactNode;
@@ -15,83 +14,136 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 }) => {
   const [height, setHeight] = useState(minHeight);
   const [isDragging, setIsDragging] = useState(false);
-  const sheetRef = useRef<HTMLDivElement>(null);
 
-  // Use Mantine's useMove to handle drag gestures
-  const { ref: dragHandleRef, active } = useMove(({ y }) => {
-    // y is between 0 and 1 relative to the container
-    // But we want absolute pixel movement.
-    // Since useMove is a bit tricky for this specific "drag up from bottom" case
-    // without a fixed container size, let's try a simpler touch event approach first
-    // or adapt useMove.
-    // Actually, let's use standard touch events for better control over the sheet behavior.
-  });
-
-  // Custom touch handling
-  const startY = useRef<number | null>(null);
+  // Physics state
+  const velocity = useRef(0);
+  const lastY = useRef<number | null>(null);
+  const lastTime = useRef<number>(0);
+  const animationFrameId = useRef<number | null>(null);
   const startHeight = useRef<number>(0);
 
-  const handleTouchStart = useEffectEvent(
+  // Constants
+  const FRICTION = 0.95;
+  const VELOCITY_THRESHOLD = 0.1;
+
+  const getWindowHeight = () => window.innerHeight;
+
+  const getMaxHeightPixels = useCallback(() => {
+    if (maxHeight.endsWith("vh")) {
+      return (parseFloat(maxHeight) / 100) * getWindowHeight();
+    } else if (maxHeight.endsWith("%")) {
+      return (parseFloat(maxHeight) / 100) * getWindowHeight();
+    } else if (maxHeight.endsWith("px")) {
+      return parseFloat(maxHeight);
+    }
+    return getWindowHeight() * 0.9; // Default fallback
+  }, [maxHeight]);
+
+  const stopInertia = () => {
+    if (animationFrameId.current) {
+      cancelAnimationFrame(animationFrameId.current);
+      animationFrameId.current = null;
+    }
+  };
+
+  const handleTouchStart = useCallback(
     (e: React.TouchEvent | React.MouseEvent) => {
+      stopInertia();
       const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-      startY.current = clientY;
+      lastY.current = clientY;
+      lastTime.current = performance.now();
       startHeight.current = height;
+      velocity.current = 0;
       setIsDragging(true);
       e.preventDefault();
     },
+    [height],
   );
 
-  const handleTouchMove = useEffectEvent((e: TouchEvent | MouseEvent) => {
-    if (startY.current === null) return;
-    const clientY =
-      "touches" in e
-        ? (e as TouchEvent).touches[0].clientY
-        : (e as MouseEvent).clientY;
-    const deltaY = startY.current - clientY; // Positive when dragging up
-    const newHeight = Math.max(minHeight, startHeight.current + deltaY);
+  const onMove = useCallback(
+    (e: TouchEvent | MouseEvent) => {
+      if (lastY.current === null) return;
+      const clientY =
+        "touches" in e
+          ? (e as TouchEvent).touches[0].clientY
+          : (e as MouseEvent).clientY;
+      const now = performance.now();
+      const dt = now - lastTime.current;
+      const dy = lastY.current - clientY; // Positive = dragging up
 
-    // Simple constraint: don't exceed window height roughly
-    // We can refine this with the passed maxHeight
-    setHeight(newHeight);
-  });
+      if (dt > 0) {
+        // Simple moving average for velocity could be smoother, but instantaneous is fine for simple flings
+        velocity.current = dy / dt;
+      }
 
-  const handleTouchEnd = useEffectEvent(() => {
-    startY.current = null;
-    setIsDragging(false);
+      setHeight((prev) => {
+        const maxPx = getMaxHeightPixels();
+        const newH = Math.min(Math.max(prev + dy, minHeight), maxPx);
+        return newH;
+      });
 
-    // Snap logic
-    const windowHeight = window.innerHeight;
+      lastY.current = clientY;
+      lastTime.current = now;
+    },
+    [minHeight, getMaxHeightPixels],
+  );
 
-    if (height > windowHeight * 0.75) {
-      // Expand
-      setHeight(windowHeight * 0.9);
-    } else if (height < windowHeight * 0.25) {
-      // Collapse
-      setHeight(minHeight);
-    } else {
-      // Don't snap; just keep the current height.
+  const inertiaLoop = useCallback(() => {
+    if (Math.abs(velocity.current) < VELOCITY_THRESHOLD) {
+      stopInertia();
+      return;
     }
-  });
+
+    setHeight((prev) => {
+      const maxPx = getMaxHeightPixels();
+      let newH = prev + velocity.current * 16; // Assume ~16ms per frame
+
+      // Bounce or stop at edges? Let's stop.
+      if (newH < minHeight) {
+        newH = minHeight;
+        velocity.current = 0;
+      } else if (newH > maxPx) {
+        newH = maxPx;
+        velocity.current = 0;
+      }
+
+      return newH;
+    });
+
+    velocity.current *= FRICTION;
+    animationFrameId.current = requestAnimationFrame(inertiaLoop);
+  }, [minHeight, getMaxHeightPixels]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+    lastY.current = null;
+
+    // Start inertia if moving fast enough
+    if (Math.abs(velocity.current) > VELOCITY_THRESHOLD) {
+      inertiaLoop();
+    }
+  }, [inertiaLoop]);
 
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener("touchmove", handleTouchMove);
+      window.addEventListener("touchmove", onMove);
       window.addEventListener("touchend", handleTouchEnd);
-      window.addEventListener("mousemove", handleTouchMove);
+      window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", handleTouchEnd);
     } else {
-      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchmove", onMove);
       window.removeEventListener("touchend", handleTouchEnd);
-      window.removeEventListener("mousemove", handleTouchMove);
+      window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", handleTouchEnd);
     }
     return () => {
-      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchmove", onMove);
       window.removeEventListener("touchend", handleTouchEnd);
-      window.removeEventListener("mousemove", handleTouchMove);
+      window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", handleTouchEnd);
+      stopInertia();
     };
-  }, [isDragging]);
+  }, [isDragging, onMove, handleTouchEnd]);
 
   return (
     <Paper
@@ -106,7 +158,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         zIndex: 1000,
         display: "flex",
         flexDirection: "column",
-        transition: isDragging ? "none" : "height 0.3s ease-out",
+        transition: isDragging ? "none" : "height 0.1s linear",
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
         overflow: "hidden",
