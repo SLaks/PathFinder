@@ -155,7 +155,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         left: 0,
         right: 0,
         height: height,
-        zIndex: 1000,
+        zIndex: 100,
         display: "flex",
         flexDirection: "column",
         transition: isDragging ? "none" : "height 0.1s linear",
