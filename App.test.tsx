@@ -34,12 +34,12 @@ vi.mock("./components/Sidebar", () => ({
 vi.mock("./services/storageService", () => ({
   getHereApiKey: vi.fn(),
   setHereApiKey: vi.fn(),
-  removeHereApiKey: vi.fn(),
+  getTransitMode: vi.fn(),
+  setTransitMode: vi.fn(),
 }));
 vi.mock("./services/locationService", () => ({
   getUserLocation: vi.fn(),
   geocodeAddresses: vi.fn(),
-  // Add this mock to prevent errors
   geocodeAddress: vi.fn(),
 }));
 vi.mock("./services/routeService", () => ({
@@ -50,9 +50,7 @@ vi.mock("./services/addressService", () => ({
 }));
 
 const renderWithMantine = (ui: React.ReactNode) => {
-  return act(() =>
-    render(<MantineProvider theme={theme}>{ui}</MantineProvider>),
-  );
+  return render(<MantineProvider theme={theme}>{ui}</MantineProvider>);
 };
 
 describe("App", () => {
@@ -66,27 +64,44 @@ describe("App", () => {
       active: [],
       completed: [],
     });
+    // Reset window.location
+    window.history.replaceState({}, "", "/");
   });
 
   it("should show API key modal if no key is stored", async () => {
     vi.mocked(storageService.getHereApiKey).mockReturnValue(null);
-    renderWithMantine(<App />);
-    console.log(document.body.innerHTML);
-    expect(
-      await screen.findByText("Enter HERE Maps API Key"),
-    ).toBeInTheDocument();
+    await act(async () => {
+      renderWithMantine(<App />);
+    });
+    expect(await screen.findByText("HERE Maps API Key")).toBeInTheDocument();
   });
 
-  it("should not show API key modal if key is stored", () => {
+  it("should not show API key modal if key is stored", async () => {
     vi.mocked(storageService.getHereApiKey).mockReturnValue("test-key");
-    renderWithMantine(<App />);
-    expect(
-      screen.queryByText("Enter HERE Maps API Key"),
-    ).not.toBeInTheDocument();
+    await act(async () => {
+      renderWithMantine(<App />);
+    });
+    expect(screen.queryByText("HERE Maps API Key")).not.toBeInTheDocument();
+  });
+
+  it("should load API key from URL query parameter", async () => {
+    vi.mocked(storageService.getHereApiKey).mockReturnValue(null);
+    window.history.pushState({}, "", "/?here_api_key=url-test-key");
+
+    await act(async () => {
+      renderWithMantine(<App />);
+    });
+
+    expect(storageService.setHereApiKey).toHaveBeenCalledWith("url-test-key");
+    expect(screen.queryByText("HERE Maps API Key")).not.toBeInTheDocument();
+    // Verify URL is cleaned
+    expect(window.location.search).toBe("");
   });
 
   it("should fetch user location on mount", async () => {
-    renderWithMantine(<App />);
+    await act(async () => {
+      renderWithMantine(<App />);
+    });
     await waitFor(() => {
       expect(locationService.getUserLocation).toHaveBeenCalled();
     });
@@ -94,21 +109,19 @@ describe("App", () => {
 
   it("should handle API key submission", async () => {
     vi.mocked(storageService.getHereApiKey).mockReturnValue(null);
-    renderWithMantine(<App />);
-
-    act(() => {
-      const input = screen.getByPlaceholderText("Paste your API Key here");
-      fireEvent.change(input, { target: { value: "new-key" } });
-
-      const button = screen.getByText("Start App");
-      fireEvent.click(button);
+    await act(async () => {
+      renderWithMantine(<App />);
     });
+
+    const input = screen.getByPlaceholderText("Paste your API Key here");
+    fireEvent.change(input, { target: { value: "new-key" } });
+
+    const button = screen.getByText("Start App");
+    fireEvent.click(button);
 
     expect(storageService.setHereApiKey).toHaveBeenCalledWith("new-key");
     await waitFor(() => {
-      expect(
-        screen.queryByText("Enter HERE Maps API Key"),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("HERE Maps API Key")).not.toBeInTheDocument();
     });
   });
 
@@ -119,7 +132,9 @@ describe("App", () => {
       routeShape: ["shape"],
     });
 
+    await act(async () => {
     renderWithMantine(<App />);
+    });
 
     // Wait for location to be loaded (Waiting for location... should disappear)
     await waitFor(() => {
@@ -129,13 +144,11 @@ describe("App", () => {
     });
 
     // Add address to enable optimization (mock sidebar logic)
-    act(() => {
-      const addBtn = screen.getByText("Add Address");
-      fireEvent.click(addBtn);
+    const addBtn = screen.getByText("Add Address");
+    fireEvent.click(addBtn);
 
-      const optimizeBtn = screen.getByText("Optimize");
-      fireEvent.click(optimizeBtn);
-    });
+    const optimizeBtn = screen.getByText("Optimize");
+    fireEvent.click(optimizeBtn);
 
     await waitFor(() => {
       expect(routeService.optimizeRoute).toHaveBeenCalled();

@@ -9,6 +9,7 @@ import {
   Flex,
   Stack,
   useMantineColorScheme,
+  Alert,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import HereMap from "./components/HereMap";
@@ -19,7 +20,6 @@ import { Address, GeoPoint, TransitMode } from "./types";
 import {
   getHereApiKey,
   setHereApiKey as saveHereApiKey,
-  removeHereApiKey,
   getTransitMode,
   setTransitMode as saveTransitMode,
 } from "./services/storageService";
@@ -27,6 +27,8 @@ import { getUserLocation, geocodeAddresses } from "./services/locationService";
 import { optimizeRoute } from "./services/routeService";
 import { separateAddressesByStatus } from "./services/addressService";
 import { DEFAULT_TRANSIT_MODE } from "./utils/transitModes";
+import { mdiAlert } from "@mdi/js";
+import Icon from "@mdi/react";
 
 const App: React.FC = () => {
   const { colorScheme } = useMantineColorScheme();
@@ -47,11 +49,24 @@ const App: React.FC = () => {
 
   // Load API Key from storage
   useEffect(() => {
-    const storedKey = getHereApiKey();
-    if (storedKey) {
-      setApiKey(storedKey);
+    // Check URL parameters first
+    const params = new URLSearchParams(window.location.search);
+    const urlKey = params.get("here_api_key");
+
+    if (urlKey) {
+      setApiKey(urlKey);
+      saveHereApiKey(urlKey);
+
+      // Remove query param from URL without reload
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    } else {
+      const storedKey = getHereApiKey();
+      if (storedKey) {
+        setApiKey(storedKey);
+      }
+      setShowKeyModal(!storedKey);
     }
-    setShowKeyModal(!storedKey);
 
     // Load transit mode from storage
     const storedMode = getTransitMode();
@@ -153,12 +168,9 @@ const App: React.FC = () => {
   };
 
   const handleResetKey = () => {
-    removeHereApiKey();
-    setApiKey("");
-    setKeyInput("");
+    // Don't clear immediately, just open the modal to allow editing/viewing
+    setKeyInput(apiKey);
     setShowKeyModal(true);
-    setAddresses([]);
-    setRouteShape([]);
   };
 
   const sidebarContent = (
@@ -192,28 +204,73 @@ const App: React.FC = () => {
       {/* API Key Modal */}
       <Modal
         opened={showKeyModal}
-        onClose={() => {}}
-        withCloseButton={false}
+        onClose={() => {
+          if (apiKey) setShowKeyModal(false);
+        }}
+        withCloseButton={!!apiKey}
         centered
-        title="Enter HERE Maps API Key"
-        closeOnClickOutside={false}
-        closeOnEscape={false}
+        title="HERE Maps API Key"
+        closeOnClickOutside={!!apiKey}
+        closeOnEscape={!!apiKey}
         size="md"
       >
         <Stack>
-          <Text size="sm" c="dimmed">
+          <Text size="sm" c="dimmed" style={{ textAlign: "justify" }}>
             This application uses HERE Maps for geocoding, mapping, and route
-            optimization. You can get a free Freemium key from{" "}
+            optimization. Need a key? Get a free key from{" "}
             <Anchor
-              href="https://platform.here.com/"
+              href="https://platform.here.com/portal/sign-up"
               target="_blank"
               rel="noreferrer"
             >
-              developer.here.com
-            </Anchor>
-            .
+              platform.here.com
+            </Anchor>{" "}
+            (requires payment information, but includes a generous free tier).
           </Text>
+
+          {apiKey && (
+            <Stack
+              gap="xs"
+              p="xs"
+              bg={colorScheme === "dark" ? "dark.6" : "gray.0"}
+              style={{
+                borderRadius: "var(--mantine-radius-sm)",
+                textAlign: "justify",
+              }}
+            >
+              <Text size="xs" fw={700} tt="uppercase" c="dimmed">
+                Shareable Link
+              </Text>
+              <Text size="xs">Share this link to pre-fill your API key.</Text>
+              <Alert title="Warning" variant="light" color="red" icon={<Icon path={mdiAlert} size={0.8} />}>
+                This link includes your Here API key, which is linked
+                to your payment details. Only share this link with people you
+                trust.
+              </Alert>
+              <Flex gap="xs">
+                <TextInput
+                  flex={1}
+                  size="xs"
+                  readOnly
+                  value={`${window.location.origin}${window.location.pathname}?here_api_key=${apiKey}`}
+                />
+                <Button
+                  size="xs"
+                  variant="default"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `${window.location.origin}${window.location.pathname}?here_api_key=${apiKey}`,
+                    );
+                  }}
+                >
+                  Copy
+                </Button>
+              </Flex>
+            </Stack>
+          )}
+
           <TextInput
+            label={apiKey && "API Key"}
             placeholder="Paste your API Key here"
             value={keyInput}
             onChange={(e) => setKeyInput(e.currentTarget.value)}
@@ -222,7 +279,7 @@ const App: React.FC = () => {
             }}
           />
           <Button onClick={() => handleSaveKey(keyInput)} fullWidth>
-            Start App
+            {apiKey ? "Save" : "Start App"}
           </Button>
           <Text size="xs" c="dimmed" ta="center">
             Your key is stored locally in your browser.
