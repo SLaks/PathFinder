@@ -88,6 +88,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     [minHeight, getMaxHeightPixels],
   );
 
+  const inertiaLoopRef = useRef<() => void>(() => {});
+
   const inertiaLoop = useCallback(() => {
     if (Math.abs(velocity.current) < VELOCITY_THRESHOLD) {
       stopInertia();
@@ -111,8 +113,14 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     });
 
     velocity.current *= FRICTION;
-    animationFrameId.current = requestAnimationFrame(inertiaLoop);
+    animationFrameId.current = requestAnimationFrame(() =>
+      inertiaLoopRef.current(),
+    );
   }, [minHeight, getMaxHeightPixels]);
+
+  useEffect(() => {
+    inertiaLoopRef.current = inertiaLoop;
+  }, [inertiaLoop]);
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
