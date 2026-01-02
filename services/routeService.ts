@@ -9,7 +9,10 @@ import { calculateOptimalSequence, getRouteShape } from "./hereService";
 export interface OptimizedRoute {
   sortedAddresses: Address[];
   routeShape: string[];
+  actions: HereAction[];
 }
+
+import { HereAction } from "./hereService";
 
 /**
  * Optimize route for a set of addresses
@@ -29,8 +32,8 @@ export async function optimizeRoute(
     transitMode,
   );
 
-  // 2. Get route shape (polyline)
-  const routeShape = await getRouteShape(
+  // 2. Get route shape (polyline) & actions
+  const { polylines, actions } = await getRouteShape(
     userLocation,
     sortedAddresses,
     apiKey,
@@ -39,7 +42,8 @@ export async function optimizeRoute(
 
   return {
     sortedAddresses,
-    routeShape,
+    routeShape: polylines,
+    actions,
   };
 }
 

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { MantineProvider, useMantineColorScheme } from "@mantine/core";
 import { Address, GeoPoint } from "../types";
+import { HereAction } from "../services/hereService";
 import "@here/maps-api-for-javascript";
 import { getAddressColor } from "../utils/colors";
 import { getInitials } from "../utils/formatters";
@@ -15,6 +16,7 @@ interface HereMapProps {
   routeShape: string[]; // Encoded polylines
   focusedAddressId: string | null;
   hoveredAddressId: string | null;
+  hoveredAction?: HereAction | null;
 }
 
 const HereMap: React.FC<HereMapProps> = ({
@@ -24,6 +26,7 @@ const HereMap: React.FC<HereMapProps> = ({
   routeShape,
   focusedAddressId,
   hoveredAddressId,
+  hoveredAction,
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -242,6 +245,46 @@ const HereMap: React.FC<HereMapProps> = ({
       }
     }
   }, [hoveredAddressId, addresses]);
+
+  // Handle Hover Highlight for Action (Direction Instruction)
+  useEffect(() => {
+    if (!hMapRef.current || !window.H) return;
+
+    const map = hMapRef.current;
+
+    // Use a separate circle for action highlight to avoid conflict or reuse?
+    // Let's reuse hoverCircleRef if possible, or create a new one.
+    // Since hoveredAddressId and hoveredAction are mutually exclusive interaction-wise (usually), reuse might be fine.
+    // But let's handle strictly.
+
+    if (hoveredAction && routeShape[hoveredAction.sectionIndex]) {
+      const lineString = window.H.geo.LineString.fromFlexiblePolyline(
+        routeShape[hoveredAction.sectionIndex],
+      );
+      // offset is index of coordinate
+      const point = lineString.extractPoint(hoveredAction.offset);
+
+      if (hoverCircleRef.current) {
+        map.removeObject(hoverCircleRef.current);
+      }
+
+      const circle = new window.H.map.Circle(
+        point,
+        30, // radius
+      );
+      circle.setStyle({
+        strokeColor: "rgba(255, 165, 0, 0.8)", // Orange for instructions
+        lineWidth: 3,
+        fillColor: "rgba(255, 165, 0, 0.4)",
+      });
+      map.addObject(circle);
+      hoverCircleRef.current = circle;
+    } else if (!hoveredAddressId && hoverCircleRef.current) {
+      // clear if neither address nor action is hovered
+      map.removeObject(hoverCircleRef.current);
+      hoverCircleRef.current = null;
+    }
+  }, [hoveredAction, routeShape, hoveredAddressId]);
 
   // Update Route Polyline
   useEffect(() => {

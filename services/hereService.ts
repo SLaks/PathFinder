@@ -1,13 +1,24 @@
 import { GeoPoint, Address, TransitMode } from "../types";
 
 // HERE API Response Types
+// HERE API Response Types
 interface HereWaypoint {
   id: string;
   sequence: number;
 }
 
+export interface HereAction {
+  action: string;
+  duration: number;
+  length: number;
+  instruction: string;
+  offset: number;
+  sectionIndex: number;
+}
+
 interface HereRouteSection {
   polyline: string;
+  actions: Omit<HereAction, "sectionIndex">[];
 }
 
 interface HereGeocodeResponse {
@@ -225,7 +236,7 @@ export const getRouteShape = async (
   sortedWaypoints: Address[],
   apiKey: string,
   transitMode: TransitMode = "car",
-): Promise<string[]> => {
+): Promise<{ polylines: string[]; actions: HereAction[] }> => {
   if (sortedWaypoints.length > 0) {
     const last = sortedWaypoints[sortedWaypoints.length - 1];
     const intermediates = sortedWaypoints.slice(0, -1);
@@ -250,7 +261,7 @@ export const getRouteShape = async (
       );
     }
 
-    v8Url.searchParams.append("return", "polyline");
+    v8Url.searchParams.append("return", "polyline,actions,instructions");
 
     const d = (await fetchWithChecks(
       v8Url.toString(),
@@ -258,8 +269,13 @@ export const getRouteShape = async (
     )) as HereRoutingResponse;
 
     if (d.routes && d.routes.length > 0) {
-      return d.routes[0].sections.map((s: HereRouteSection) => s.polyline);
+      const polylines = d.routes[0].sections.map((s) => s.polyline);
+      const actions = d.routes[0].sections.flatMap((s, index) =>
+        s.actions.map((a) => ({ ...a, sectionIndex: index })),
+      );
+      return { polylines, actions };
     }
   }
-  return [];
+  return { polylines: [], actions: [] };
 };
+

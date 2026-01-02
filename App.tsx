@@ -26,6 +26,7 @@ import {
 import { getUserLocation, geocodeAddresses } from "./services/locationService";
 import { optimizeRoute } from "./services/routeService";
 import { separateAddressesByStatus } from "./services/addressService";
+import { HereAction } from "./services/hereService";
 import { DEFAULT_TRANSIT_MODE } from "./utils/transitModes";
 import { mdiAlert } from "@mdi/js";
 import Icon from "@mdi/react";
@@ -40,8 +41,10 @@ const App: React.FC = () => {
   const [isOptimizing, setIsOptimizing] = useState<boolean>(false);
   const [isGeocoding, setIsGeocoding] = useState<boolean>(false);
   const [routeShape, setRouteShape] = useState<string[]>([]);
+  const [routeActions, setRouteActions] = useState<HereAction[]>([]);
   const [focusedAddressId, setFocusedAddressId] = useState<string | null>(null);
   const [hoveredAddressId, setHoveredAddressId] = useState<string | null>(null);
+  const [hoveredAction, setHoveredAction] = useState<HereAction | null>(null);
   const [transitMode, setTransitMode] =
     useState<TransitMode>(DEFAULT_TRANSIT_MODE);
 
@@ -134,16 +137,16 @@ const App: React.FC = () => {
       const { active, completed } = separateAddressesByStatus(addresses);
 
       // Optimize route for active addresses only
-      const { sortedAddresses, routeShape: shape } = await optimizeRoute(
-        userLocation,
-        active,
-        apiKey,
-        transitMode,
-      );
+      const {
+        sortedAddresses,
+        routeShape: shape,
+        actions,
+      } = await optimizeRoute(userLocation, active, apiKey, transitMode);
 
       // Update state with sorted order, appending completed ones at the end
       setAddresses([...sortedAddresses, ...completed]);
       setRouteShape(shape);
+      setRouteActions(actions);
 
       // No need to switch tabs anymore, map is always visible
     } catch (error: unknown) {
@@ -189,6 +192,8 @@ const App: React.FC = () => {
         setTransitMode(mode);
         saveTransitMode(mode);
       }}
+      routeActions={routeActions}
+      onHoverAction={setHoveredAction}
     />
   );
 
@@ -242,10 +247,14 @@ const App: React.FC = () => {
                 Shareable Link
               </Text>
               <Text size="xs">Share this link to pre-fill your API key.</Text>
-              <Alert title="Warning" variant="light" color="red" icon={<Icon path={mdiAlert} size={0.8} />}>
-                This link includes your Here API key, which is linked
-                to your payment details. Only share this link with people you
-                trust.
+              <Alert
+                title="Warning"
+                variant="light"
+                color="red"
+                icon={<Icon path={mdiAlert} size={0.8} />}
+              >
+                This link includes your Here API key, which is linked to your
+                payment details. Only share this link with people you trust.
               </Alert>
               <Flex gap="xs">
                 <TextInput
@@ -319,6 +328,7 @@ const App: React.FC = () => {
             routeShape={routeShape}
             focusedAddressId={focusedAddressId}
             hoveredAddressId={hoveredAddressId}
+            hoveredAction={hoveredAction}
           />
           {!userLocation && !showKeyModal && (
             <Box

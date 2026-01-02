@@ -130,6 +130,7 @@ describe("App", () => {
     vi.mocked(routeService.optimizeRoute).mockResolvedValue({
       sortedAddresses: [],
       routeShape: ["shape"],
+      actions: [],
     });
 
     await act(async () => {

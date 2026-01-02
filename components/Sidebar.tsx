@@ -24,6 +24,8 @@ import {
   UnstyledButton,
   useMantineColorScheme,
   Menu,
+  Tabs,
+  Timeline,
 } from "@mantine/core";
 import {
   Address,
@@ -32,6 +34,7 @@ import {
   SheetConfig,
   TransitMode,
 } from "../types";
+import { HereAction } from "../services/hereService";
 import { parseAddressesFromText } from "../services/addressService";
 import {
   getSheetConfig,
@@ -63,6 +66,8 @@ export interface SidebarProps {
   onHoverAddress: (id: string | null) => void;
   transitMode: TransitMode;
   onTransitModeChange: (mode: TransitMode) => void;
+  routeActions?: HereAction[];
+  onHoverAction?: (action: HereAction | null) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -77,12 +82,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   onHoverAddress,
   transitMode,
   onTransitModeChange,
+  routeActions = [],
+  onHoverAction = () => {},
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const [inputText, setInputText] = useState("");
   const [importStatus, setImportStatus] = useState<ImportStatus>(
     ImportStatus.IDLE,
   );
+  const [activeTab, setActiveTab] = useState<string | null>("stops");
 
   // Google Sheets State
   const [sheetConfig, setSheetConfig] = useState<SheetConfig | null>(null);
@@ -126,6 +134,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const processTextData = useCallback(
     async (text: string) => {
       setImportStatus(ImportStatus.PARSING);
+      setActiveTab("stops");
       try {
         const newAddresses = await parseAddressesFromText(text);
         setAddresses(newAddresses);
@@ -233,6 +242,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     setSheetConfig(result.config);
     setStatusColumnIndex(result.statusColumnIndex);
     setImportStatus(ImportStatus.SUCCESS);
+    setActiveTab("stops");
     setTimeout(() => setImportStatus(ImportStatus.IDLE), 3000);
   };
 
@@ -314,258 +324,256 @@ const Sidebar: React.FC<SidebarProps> = ({
         </Group>
       </Box>
 
-      <ScrollArea flex={1} p="md" id="address-list-container">
-        <Stack gap="lg">
-          {/* Source Selection */}
-          <Stack gap="xs" className="print-hidden">
-            <Text size="lg" fw={600}>
-              Data Source
-            </Text>
-            <Paper
-              withBorder
-              radius="md"
-              bg={colorScheme === "dark" ? "dark.6" : "gray.0"}
-              style={{ overflow: "hidden" }}
+      <ScrollArea flex={1} p={0} id="address-list-container">
+        <Tabs
+          value={activeTab}
+          onChange={setActiveTab}
+          style={{ display: "flex", flexDirection: "column", height: "100%" }}
+        >
+          <Tabs.List grow>
+            <Tabs.Tab value="stops">Stops ({addresses.length})</Tabs.Tab>
+            <Tabs.Tab
+              value="directions"
+              disabled={!routeActions || routeActions.length === 0}
             >
-              {/* Header */}
-              <Group
-                p="xs"
-                bg={colorScheme === "dark" ? "dark.7" : "white"}
-                justify="space-between"
-                onClick={() => setIsSourceExpanded(!isSourceExpanded)}
-                style={{
-                  cursor: "pointer",
-                  borderBottom: isSourceExpanded
-                    ? colorScheme === "dark"
-                      ? "1px solid var(--mantine-color-dark-4)"
-                      : "1px solid var(--mantine-color-gray-3)"
-                    : "none",
-                }}
-              >
-                <Group gap="xs" style={{ overflow: "hidden" }}>
-                  {!isSourceExpanded && sheetConfig ? (
-                    <>
-                      <Icon
-                        path={mdiGoogleSpreadsheet}
-                        size={0.8}
-                        color="green"
-                      />
-                      <Text size="sm" fw={500} truncate>
-                        {sheetConfig.spreadsheetName}
-                      </Text>
-                      {sheetConfig.sheetTitle && (
-                        <Text size="xs" c="dimmed">
-                          / {sheetConfig.sheetTitle}
-                        </Text>
-                      )}
-                    </>
-                  ) : (
-                    <Text size="sm" c="dimmed" fw={500}>
-                      {isSourceExpanded
-                        ? "Configure Import"
-                        : "No Source Selected"}
-                    </Text>
-                  )}
-                </Group>
-                <Group gap={4}>
-                  {!isSourceExpanded && sheetConfig && (
-                    <ActionIcon
-                      variant="subtle"
-                      color="green"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleGoogleAction("SYNC");
-                      }}
-                      loading={isSyncing}
-                      disabled={isBusy}
-                    >
-                      <Icon path={mdiSync} size={0.8} />
-                    </ActionIcon>
-                  )}
-                  <ActionIcon variant="subtle" color="gray">
-                    <Icon
-                      path={isSourceExpanded ? mdiChevronDown : mdiChevronRight}
-                      size={0.9}
-                    />
-                  </ActionIcon>
-                </Group>
-              </Group>
+              Directions
+            </Tabs.Tab>
+          </Tabs.List>
 
-              <Collapse in={isSourceExpanded}>
-                <Stack p="md" gap="md">
-                  {/* Google Sheets */}
-                  <Stack gap="xs">
-                    <Group justify="space-between">
-                      <Text size="xs" fw={500} c="dimmed" tt="uppercase">
-                        Google Sheets
-                      </Text>
-                      {sheetConfig && (
-                        <Badge color="green" variant="light" tt="none">
-                          {sheetConfig.spreadsheetName} /{" "}
-                          {sheetConfig.sheetTitle}
-                        </Badge>
-                      )}
-                    </Group>
-                    {sheetConfig?.columnMapping?.statusColumnName && (
-                      <Text size="xs" c="dimmed">
-                        Checkboxes sync to the{" "}
-                        <Text span fw={500} c="blue">
-                          {sheetConfig.columnMapping.statusColumnName}
-                        </Text>{" "}
-                        column
-                      </Text>
-                    )}
-
-                    {sheetConfig ? (
-                      <Group gap="xs">
-                        <Button
-                          flex={1}
-                          color="green"
-                          leftSection={
-                            <Icon path={mdiSync} size={0.8} spin={isSyncing} />
-                          }
-                          onClick={() => handleGoogleAction("SYNC")}
-                          loading={isSyncing}
-                          disabled={isBusy}
-                        >
-                          Sync Sheet
-                        </Button>
-                        <Button
-                          variant="default"
-                          onClick={() => handleGoogleAction("PICK")}
-                          disabled={isBusy}
-                        >
-                          Change
-                        </Button>
-                      </Group>
-                    ) : (
-                      <Button
-                        variant="default"
-                        leftSection={
+          <Tabs.Panel value="stops" p="md">
+            <Stack gap="lg">
+              {/* Source Selection */}
+              <Stack gap="xs" className="print-hidden">
+                <Text size="lg" fw={600}>
+                  Data Source
+                </Text>
+                <Paper
+                  withBorder
+                  radius="md"
+                  bg={colorScheme === "dark" ? "dark.6" : "gray.0"}
+                  style={{ overflow: "hidden" }}
+                >
+                  {/* Header */}
+                  <Group
+                    p="xs"
+                    bg={colorScheme === "dark" ? "dark.7" : "white"}
+                    justify="space-between"
+                    onClick={() => setIsSourceExpanded(!isSourceExpanded)}
+                    style={{
+                      cursor: "pointer",
+                      borderBottom: isSourceExpanded
+                        ? colorScheme === "dark"
+                          ? "1px solid var(--mantine-color-dark-4)"
+                          : "1px solid var(--mantine-color-gray-3)"
+                        : "none",
+                    }}
+                  >
+                    <Group gap="xs" style={{ overflow: "hidden" }}>
+                      {!isSourceExpanded && sheetConfig ? (
+                        <>
                           <Icon
                             path={mdiGoogleSpreadsheet}
                             size={0.8}
                             color="green"
                           />
-                        }
-                        onClick={() => handleGoogleAction("PICK")}
-                        disabled={isBusy}
-                        fullWidth
-                      >
-                        Connect Google Sheet
-                      </Button>
-                    )}
-                  </Stack>
-
-                  <Divider label="Or" labelPosition="center" />
-
-                  {/* Paste Text */}
-                  <Stack gap="xs">
-                    <Text size="xs" fw={500} c="dimmed" tt="uppercase">
-                      Paste Text
-                    </Text>
-                    <Textarea
-                      placeholder="Paste addresses here (e.g. Name | Address)..."
-                      minRows={4}
-                      value={inputText}
-                      onChange={(e) => setInputText(e.currentTarget.value)}
-                      disabled={isBusy}
-                    />
-                    <Group justify="space-between">
-                      <Button
-                        size="sm"
-                        color="dark"
-                        onClick={handleImport}
-                        loading={importStatus === ImportStatus.PARSING}
-                        disabled={isBusy || !inputText}
-                      >
-                        Parse Text
-                      </Button>
-                      {importStatus === ImportStatus.SUCCESS && (
-                        <Text size="xs" c="green" fw={500}>
-                          Imported!
-                        </Text>
-                      )}
-                      {importStatus === ImportStatus.ERROR && (
-                        <Text size="xs" c="red" fw={500}>
-                          Failed.
+                          <Text size="sm" fw={500} truncate>
+                            {sheetConfig.spreadsheetName}
+                          </Text>
+                          {sheetConfig.sheetTitle && (
+                            <Text size="xs" c="dimmed">
+                              / {sheetConfig.sheetTitle}
+                            </Text>
+                          )}
+                        </>
+                      ) : (
+                        <Text size="sm" c="dimmed" fw={500}>
+                          {isSourceExpanded
+                            ? "Configure Import"
+                            : "No Source Selected"}
                         </Text>
                       )}
                     </Group>
-                  </Stack>
-                </Stack>
-              </Collapse>
-            </Paper>
-          </Stack>
+                    <Group gap={4}>
+                      {!isSourceExpanded && sheetConfig && (
+                        <ActionIcon
+                          variant="subtle"
+                          color="green"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGoogleAction("SYNC");
+                          }}
+                          loading={isSyncing}
+                          disabled={isBusy}
+                        >
+                          <Icon path={mdiSync} size={0.8} />
+                        </ActionIcon>
+                      )}
+                      <ActionIcon variant="subtle" color="gray">
+                        <Icon
+                          path={
+                            isSourceExpanded ? mdiChevronDown : mdiChevronRight
+                          }
+                          size={0.9}
+                        />
+                      </ActionIcon>
+                    </Group>
+                  </Group>
 
-          {/* List */}
-          <Stack gap="xs">
-            <Group justify="space-between" className="print-hidden">
-              <Text size="lg" fw={600}>
-                Stops ({addresses.length})
-              </Text>
-              {addresses.length > 0 && (
-                <Button
-                  variant="subtle"
-                  color="red"
-                  size="xs"
-                  onClick={() => setAddresses([])}
-                  disabled={isBusy}
-                >
-                  Clear
-                </Button>
-              )}
-            </Group>
+                  <Collapse in={isSourceExpanded}>
+                    <Stack p="md" gap="md">
+                      {/* Google Sheets */}
+                      <Stack gap="xs">
+                        <Group justify="space-between">
+                          <Text size="xs" fw={500} c="dimmed" tt="uppercase">
+                            Google Sheets
+                          </Text>
+                          {sheetConfig && (
+                            <Badge color="green" variant="light" tt="none">
+                              {sheetConfig.spreadsheetName} /{" "}
+                              {sheetConfig.sheetTitle}
+                            </Badge>
+                          )}
+                        </Group>
+                        {sheetConfig?.columnMapping?.statusColumnName && (
+                          <Text size="xs" c="dimmed">
+                            Checkboxes sync to the{" "}
+                            <Text span fw={500} c="blue">
+                              {sheetConfig.columnMapping.statusColumnName}
+                            </Text>{" "}
+                            column
+                          </Text>
+                        )}
 
-            {addresses.length === 0 && (
-              <Box
-                p="xl"
-                style={{
-                  border:
-                    colorScheme === "dark"
-                      ? "2px dashed var(--mantine-color-dark-4)"
-                      : "2px dashed var(--mantine-color-gray-3)",
-                  borderRadius: "var(--mantine-radius-md)",
-                  textAlign: "center",
-                }}
-              >
-                <Text size="sm" c="dimmed">
-                  No addresses added yet.
-                </Text>
-              </Box>
-            )}
+                        {sheetConfig ? (
+                          <Group gap="xs">
+                            <Button
+                              flex={1}
+                              color="green"
+                              leftSection={
+                                <Icon
+                                  path={mdiSync}
+                                  size={0.8}
+                                  spin={isSyncing}
+                                />
+                              }
+                              onClick={() => handleGoogleAction("SYNC")}
+                              loading={isSyncing}
+                              disabled={isBusy}
+                            >
+                              Sync Sheet
+                            </Button>
+                            <Button
+                              variant="default"
+                              onClick={() => handleGoogleAction("PICK")}
+                              disabled={isBusy}
+                            >
+                              Change
+                            </Button>
+                          </Group>
+                        ) : (
+                          <Button
+                            variant="default"
+                            leftSection={
+                              <Icon
+                                path={mdiGoogleSpreadsheet}
+                                size={0.8}
+                                color="green"
+                              />
+                            }
+                            onClick={() => handleGoogleAction("PICK")}
+                            disabled={isBusy}
+                            fullWidth
+                          >
+                            Connect Google Sheet
+                          </Button>
+                        )}
+                      </Stack>
 
-            <Stack gap="xs">
-              {pendingAddresses.map((addr, idx) => (
-                <AddressCard
-                  key={addr.id}
-                  address={addr}
-                  index={idx}
-                  onClick={() => onFocusAddress(addr.id)}
-                  onMouseEnter={() => onHoverAddress(addr.id)}
-                  onMouseLeave={() => onHoverAddress(null)}
-                  className="p-3"
-                  disabled={isBusy}
-                  onToggleComplete={(val) => handleToggleComplete(addr.id, val)}
-                  statusColumnName={
-                    sheetConfig?.columnMapping?.statusColumnName
-                  }
-                />
-              ))}
-            </Stack>
+                      <Divider label="Or" labelPosition="center" />
 
-            {completedAddresses.length > 0 && (
-              <div className="print-hidden">
-                <Divider label="Completed" labelPosition="left" />
-                <Stack
-                  gap="xs"
-                  style={{ opacity: 0.6, filter: "grayscale(100%)" }}
-                >
-                  {completedAddresses.map((addr, idx) => (
+                      {/* Paste Text */}
+                      <Stack gap="xs">
+                        <Text size="xs" fw={500} c="dimmed" tt="uppercase">
+                          Paste Text
+                        </Text>
+                        <Textarea
+                          placeholder="Paste addresses here (e.g. Name | Address)..."
+                          minRows={4}
+                          value={inputText}
+                          onChange={(e) => setInputText(e.currentTarget.value)}
+                          disabled={isBusy}
+                        />
+                        <Group justify="space-between">
+                          <Button
+                            size="sm"
+                            color="dark"
+                            onClick={handleImport}
+                            loading={importStatus === ImportStatus.PARSING}
+                            disabled={isBusy || !inputText}
+                          >
+                            Parse Text
+                          </Button>
+                          {importStatus === ImportStatus.SUCCESS && (
+                            <Text size="xs" c="green" fw={500}>
+                              Imported!
+                            </Text>
+                          )}
+                          {importStatus === ImportStatus.ERROR && (
+                            <Text size="xs" c="red" fw={500}>
+                              Failed.
+                            </Text>
+                          )}
+                        </Group>
+                      </Stack>
+                    </Stack>
+                  </Collapse>
+                </Paper>
+              </Stack>
+
+              {/* List */}
+              {/* List */}
+              <Stack gap="xs">
+                <Group justify="space-between" className="print-hidden">
+                  <Text size="lg" fw={600}>
+                    Address List
+                  </Text>
+                  {addresses.length > 0 && (
+                    <Button
+                      variant="subtle"
+                      color="red"
+                      size="xs"
+                      onClick={() => setAddresses([])}
+                      disabled={isBusy}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </Group>
+
+                {addresses.length === 0 && (
+                  <Box
+                    p="xl"
+                    style={{
+                      border:
+                        colorScheme === "dark"
+                          ? "2px dashed var(--mantine-color-dark-4)"
+                          : "2px dashed var(--mantine-color-gray-3)",
+                      borderRadius: "var(--mantine-radius-md)",
+                      textAlign: "center",
+                    }}
+                  >
+                    <Text size="sm" c="dimmed">
+                      No addresses added yet.
+                    </Text>
+                  </Box>
+                )}
+
+                <Stack gap="xs">
+                  {pendingAddresses.map((addr, idx) => (
                     <AddressCard
                       key={addr.id}
                       address={addr}
-                      index={idx + pendingAddresses.length} // Keep index continuous? Or just hide index for completed?
+                      index={idx}
                       onClick={() => onFocusAddress(addr.id)}
                       onMouseEnter={() => onHoverAddress(addr.id)}
                       onMouseLeave={() => onHoverAddress(null)}
@@ -580,10 +588,90 @@ const Sidebar: React.FC<SidebarProps> = ({
                     />
                   ))}
                 </Stack>
-              </div>
+
+                {completedAddresses.length > 0 && (
+                  <div className="print-hidden">
+                    <Divider label="Completed" labelPosition="left" />
+                    <Stack
+                      gap="xs"
+                      style={{ opacity: 0.6, filter: "grayscale(100%)" }}
+                    >
+                      {completedAddresses.map((addr, idx) => (
+                        <AddressCard
+                          key={addr.id}
+                          address={addr}
+                          index={idx + pendingAddresses.length} // Keep index continuous? Or just hide index for completed?
+                          onClick={() => onFocusAddress(addr.id)}
+                          onMouseEnter={() => onHoverAddress(addr.id)}
+                          onMouseLeave={() => onHoverAddress(null)}
+                          className="p-3"
+                          disabled={isBusy}
+                          onToggleComplete={(val) =>
+                            handleToggleComplete(addr.id, val)
+                          }
+                          statusColumnName={
+                            sheetConfig?.columnMapping?.statusColumnName
+                          }
+                        />
+                      ))}
+                    </Stack>
+                  </div>
+                )}
+              </Stack>
+            </Stack>
+          </Tabs.Panel>
+
+          <Tabs.Panel value="directions" p="md">
+            {routeActions.length === 0 ? (
+              <Text c="dimmed" size="sm" ta="center" mt="xl">
+                Optimize a route to see turn-by-turn directions.
+              </Text>
+            ) : (
+              <Timeline active={-1} bulletSize={24} lineWidth={2}>
+                {routeActions.map((action, index) => (
+                  <Timeline.Item
+                    key={index}
+                    title={action.action}
+                    bullet={
+                      <Box
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          backgroundColor: "var(--mantine-color-blue-6)",
+                        }}
+                      />
+                    }
+                  >
+                    <Box
+                      onMouseEnter={() => onHoverAction(action)}
+                      onMouseLeave={() => onHoverAction(null)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <Text
+                        size="sm"
+                        dangerouslySetInnerHTML={{
+                          __html: action.instruction,
+                        }}
+                      />
+                      <Group gap="xs" mt={4}>
+                        <Text size="xs" c="dimmed">
+                          {action.length} m
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          •
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {Math.ceil(action.duration / 60)} min
+                        </Text>
+                      </Group>
+                    </Box>
+                  </Timeline.Item>
+                ))}
+              </Timeline>
             )}
-          </Stack>
-        </Stack>
+          </Tabs.Panel>
+        </Tabs>
       </ScrollArea>
 
       {/* Footer */}

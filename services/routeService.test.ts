@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import * as routeService from "./routeService";
 import * as hereService from "./hereService";
 import { Address, GeoPoint } from "../types";
+import { HereAction } from "./hereService";
 
 // Mock hereService
 vi.mock("./hereService", () => ({
@@ -17,11 +18,15 @@ describe("routeService", () => {
       const apiKey = "test-key";
       const sortedAddresses = [...addresses];
       const routeShape = ["polyline-string"];
+      const actions: HereAction[] = [];
 
       vi.mocked(hereService.calculateOptimalSequence).mockResolvedValue({
         sortedAddresses,
       });
-      vi.mocked(hereService.getRouteShape).mockResolvedValue(routeShape);
+      vi.mocked(hereService.getRouteShape).mockResolvedValue({
+        polylines: routeShape,
+        actions,
+      });
 
       const result = await routeService.optimizeRoute(
         userLocation,
@@ -32,16 +37,19 @@ describe("routeService", () => {
       expect(result).toEqual({
         sortedAddresses,
         routeShape,
+        actions,
       });
       expect(hereService.calculateOptimalSequence).toHaveBeenCalledWith(
         userLocation,
         addresses,
         apiKey,
+        "car",
       );
       expect(hereService.getRouteShape).toHaveBeenCalledWith(
         userLocation,
         sortedAddresses,
         apiKey,
+        "car",
       );
     });
   });
