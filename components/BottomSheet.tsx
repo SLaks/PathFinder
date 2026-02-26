@@ -167,6 +167,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         display: "flex",
         flexDirection: "column",
         transition: isDragging ? "none" : "height 0.1s linear",
+        boxShadow: "0 -2px 6px rgba(0,0,0,0.16), 0 -2px 6px rgba(0,0,0,0.23)",
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
         overflow: "hidden",
@@ -176,14 +177,14 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       <Box
         onMouseDown={handleTouchStart}
         onTouchStart={handleTouchStart}
+        bg="emerald.6"
         style={{
           padding: rem(10),
           cursor: "grab",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          background: "var(--mantine-color-body)",
-          borderBottom: "1px solid var(--mantine-color-default-border)",
+          borderBottom: "1px solid var(--mantine-color-emerald-5)",
           flexShrink: 0,
           touchAction: "none", // Prevent scrolling while dragging handle
         }}
