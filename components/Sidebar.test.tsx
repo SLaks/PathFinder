@@ -56,7 +56,7 @@ describe("Sidebar", () => {
 
   it("should render correctly", () => {
     renderWithMantine(<Sidebar {...defaultProps} />);
-    expect(screen.getByText("RouteOptima")).toBeInTheDocument();
+    expect(screen.getByText("PathFinder")).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText(/Paste addresses here/),
     ).toBeInTheDocument();

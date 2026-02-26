@@ -3,7 +3,7 @@ import { test, expect } from "./fixtures";
 test.describe("AddressCard visual tests", () => {
   test("AddressCard should render correctly", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // Add an address to generate a card
     const textarea = page.getByPlaceholder(/Paste addresses here/);
@@ -40,7 +40,7 @@ test.describe("AddressCard visual tests", () => {
   test("AddressCard with completion checkbox", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // Add an address
     const textarea = page.getByPlaceholder(/Paste addresses here/);
@@ -72,7 +72,7 @@ test.describe("AddressCard visual tests", () => {
   test("AddressCard in completed state", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // Add an address
     const textarea = page.getByPlaceholder(/Paste addresses here/);

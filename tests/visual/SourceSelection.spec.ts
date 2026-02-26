@@ -3,7 +3,7 @@ import { test, expect } from "./fixtures";
 test.describe("Source selection visual tests", () => {
   test("Source section expanded", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // The source section should be expanded by default
     await expect(page.getByText("Configure Import")).toBeVisible();
@@ -17,7 +17,7 @@ test.describe("Source selection visual tests", () => {
 
   test("Source section with paste text area", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // Focus on the textarea
     const textarea = page.getByPlaceholder(/Paste addresses here/);
@@ -32,7 +32,7 @@ test.describe("Source selection visual tests", () => {
 
   test("Google Sheets section", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // Find the Google Sheets section
     const sheetsSection = page.locator('text="Google Sheets"').locator("..");
@@ -44,7 +44,7 @@ test.describe("Source selection visual tests", () => {
 
   test("Parse text button states", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     const parseButton = page.getByRole("button", { name: "Parse Text" });
 
@@ -65,7 +65,7 @@ test.describe("Source selection visual tests", () => {
 
   test("Import success feedback", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // Add and parse text
     await page.getByPlaceholder(/Paste addresses here/).fill("123 Main St");
@@ -86,7 +86,7 @@ test.describe("Source selection visual tests", () => {
 
   test("Stops counter", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // Initially shows 0
     await expect(page.getByText(/Stops \(0\)/)).toBeVisible();

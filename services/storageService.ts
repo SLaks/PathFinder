@@ -1,8 +1,8 @@
 import { SheetConfig, TransitMode } from "../types";
 
-const STORAGE_KEY_HERE_API = "here_api_key";
-const STORAGE_KEY_SHEET_CONFIG = "routeoptima_sheet_config";
-const STORAGE_KEY_TRANSIT_MODE = "routeoptima_transit_mode";
+const STORAGE_KEY_HERE_API = "PathFinder: here_api_key";
+const STORAGE_KEY_SHEET_CONFIG = "PathFinder: sheet_config";
+const STORAGE_KEY_TRANSIT_MODE = "PathFinder: transit_mode";
 
 /**
  * Storage Service

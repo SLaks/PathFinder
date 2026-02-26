@@ -3,7 +3,7 @@ import { test, expect } from "./fixtures";
 test.describe("Route optimization visual tests", () => {
   test("Optimize button disabled state", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // The optimize button should be disabled with no addresses
     const optimizeButton = page.getByRole("button", {
@@ -18,7 +18,7 @@ test.describe("Route optimization visual tests", () => {
 
   test("Optimize button with single address", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // Add one address
     const textarea = page.getByPlaceholder(/Paste addresses here/);
@@ -35,7 +35,7 @@ test.describe("Route optimization visual tests", () => {
 
   test("Optimize button enabled state", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // Add multiple addresses
     const textarea = page.getByPlaceholder(/Paste addresses here/);
@@ -56,7 +56,7 @@ test.describe("Route optimization visual tests", () => {
 
   test("Transit mode selector", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // Find the transit mode button (should show "Car" by default)
     const transitModeButton = page.getByRole("button", { name: /Car/i });
@@ -74,7 +74,7 @@ test.describe("Route optimization visual tests", () => {
 
   test("Clear button functionality", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
 
     // Add addresses
     const textarea = page.getByPlaceholder(/Paste addresses here/);

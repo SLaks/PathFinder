@@ -12,7 +12,7 @@ describe("storageService", () => {
     it("should set and get the HERE API key", () => {
       const key = "test-api-key";
       storageService.setHereApiKey(key);
-      expect(localStorage.getItem("here_api_key")).toBe(key);
+      expect(localStorage.getItem("PathFinder: here_api_key")).toBe(key);
       expect(storageService.getHereApiKey()).toBe(key);
     });
 
@@ -22,9 +22,9 @@ describe("storageService", () => {
 
     it("should remove the HERE API key", () => {
       const key = "test-api-key";
-      localStorage.setItem("here_api_key", key);
+      localStorage.setItem("PathFinder: here_api_key", key);
       storageService.removeHereApiKey();
-      expect(localStorage.getItem("here_api_key")).toBeNull();
+      expect(localStorage.getItem("PathFinder: here_api_key")).toBeNull();
       expect(storageService.getHereApiKey()).toBeNull();
     });
   });
@@ -42,7 +42,7 @@ describe("storageService", () => {
 
     it("should set and get the sheet config", () => {
       storageService.setSheetConfig(mockConfig);
-      const stored = localStorage.getItem("routeoptima_sheet_config");
+      const stored = localStorage.getItem("PathFinder: sheet_config");
       expect(stored).toBe(JSON.stringify(mockConfig));
       expect(storageService.getSheetConfig()).toEqual(mockConfig);
     });
@@ -55,7 +55,7 @@ describe("storageService", () => {
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
-      localStorage.setItem("routeoptima_sheet_config", "invalid-json");
+      localStorage.setItem("PathFinder: sheet_config", "invalid-json");
 
       expect(storageService.getSheetConfig()).toBeNull();
       expect(consoleSpy).toHaveBeenCalled();
@@ -63,11 +63,11 @@ describe("storageService", () => {
 
     it("should remove the sheet config", () => {
       localStorage.setItem(
-        "routeoptima_sheet_config",
+        "PathFinder: sheet_config",
         JSON.stringify(mockConfig),
       );
       storageService.removeSheetConfig();
-      expect(localStorage.getItem("routeoptima_sheet_config")).toBeNull();
+      expect(localStorage.getItem("PathFinder: sheet_config")).toBeNull();
       expect(storageService.getSheetConfig()).toBeNull();
     });
   });

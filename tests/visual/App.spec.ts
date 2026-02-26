@@ -4,7 +4,7 @@ test("App should render correctly", async ({ page }) => {
   await page.goto("/");
 
   // Wait for the main elements to load
-  await expect(page.getByText("RouteOptima")).toBeVisible();
+  await expect(page.getByText("PathFinder")).toBeVisible();
   await expect(page.getByText("Import. Plan. Navigate.")).toBeVisible();
 
   // Wait for the map container - using data-testid or class
@@ -26,7 +26,7 @@ test("App should render correctly", async ({ page }) => {
 test("App with dark mode", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByText("RouteOptima")).toBeVisible();
+  await expect(page.getByText("PathFinder")).toBeVisible();
 
   // Find and click the dark mode toggle
   const darkModeToggle = page
@@ -63,7 +63,7 @@ test("App mobile layout with bottom sheet", async ({ page }) => {
   // Check if Bottom Sheet is visible
   // The bottom sheet is a Paper component with fixed position bottom: 0
   // We can look for the drag handle or specific text in the sidebar
-  await expect(page.getByText("RouteOptima")).toBeVisible();
+  await expect(page.getByText("PathFinder")).toBeVisible();
 
   // Take screenshot of mobile view
   await expect(page).toHaveScreenshot("app-mobile.png", {

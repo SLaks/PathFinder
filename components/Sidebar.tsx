@@ -304,7 +304,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <Group justify="space-between" align="flex-start">
           <Box>
             <Title order={1} size="h3">
-              RouteOptima
+              PathFinder
             </Title>
             <Text size="sm" c="blue.1">
               Import. Plan. Navigate.

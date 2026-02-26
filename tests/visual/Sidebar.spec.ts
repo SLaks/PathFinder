@@ -4,7 +4,7 @@ test.describe("Sidebar visual tests", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     // Wait for app to be ready
-    await expect(page.getByText("RouteOptima")).toBeVisible();
+    await expect(page.getByText("PathFinder")).toBeVisible();
   });
 
   test("Sidebar should render correctly", async ({ page }) => {
