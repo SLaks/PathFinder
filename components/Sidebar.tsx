@@ -302,14 +302,17 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Header */}
       <Box p="md" bg="emerald.6" c="white" className="print-hidden">
         <Group justify="space-between" align="flex-start">
-          <Box>
-            <Title order={1} size="h3">
-              PathFinder
-            </Title>
-            <Text size="sm" c="gold.4">
-              Import. Plan. Navigate.
-            </Text>
-          </Box>
+          <Group gap="sm">
+            <img src="/images/icon.png" alt="Logo" style={{ width: 48, height: 48 }} />
+            <Box>
+              <Title order={1} size="h3">
+                PathFinder
+              </Title>
+              <Text size="sm" c="gold.4">
+                Import. Plan. Navigate.
+              </Text>
+            </Box>
+          </Group>
           <Button
             variant="white"
             size="xs"
