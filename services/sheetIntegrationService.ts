@@ -13,16 +13,7 @@ import {
   identifySheetColumns,
 } from "./addressService";
 import { setSheetConfig } from "./storageService";
-
-/**
- * Sheet Integration Service
- * Orchestrates Google Sheets integration
- */
-
-// Hardcoded Google Credentials
-const GOOGLE_CLIENT_ID =
-  "377676797720-gue2trd92glfihma88lsm813je9u51al.apps.googleusercontent.com";
-const GOOGLE_API_KEY = "AIzaSyChd3QUP4K-8psCmCh8RzKnqJ6Vwrys44M";
+import { GOOGLE_API_KEY, GOOGLE_CLIENT_ID } from "./credentials";
 
 export interface SheetPickerResult {
   requiresSheetSelection: boolean;

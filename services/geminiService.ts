@@ -1,7 +1,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ColumnMapping } from "../types";
+import { GOOGLE_API_KEY } from "./credentials";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
 
 export const parseAddressesWithGemini = async (
   text: string,
