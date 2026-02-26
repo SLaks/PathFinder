@@ -64,8 +64,8 @@ export const AddressCard: React.FC<AddressCardProps> = ({
             : "var(--mantine-color-red-0)"
           : isLoading
           ? colorScheme === "dark"
-            ? "var(--mantine-color-blue-9)"
-            : "var(--mantine-color-blue-0)"
+            ? "var(--mantine-color-emerald-9)"
+            : "var(--mantine-color-emerald-0)"
           : "transparent", // We use a custom color for bubble backgrounds.
         borderColor: isError
           ? colorScheme === "dark"
@@ -73,8 +73,8 @@ export const AddressCard: React.FC<AddressCardProps> = ({
             : "var(--mantine-color-red-2)"
           : isLoading
           ? colorScheme === "dark"
-            ? "var(--mantine-color-blue-7)"
-            : "var(--mantine-color-blue-2)"
+            ? "var(--mantine-color-emerald-7)"
+            : "var(--mantine-color-emerald-2)"
           : undefined,
         transition: "all 0.2s ease",
       }}
@@ -138,7 +138,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
             {address.formattedAddress || address.originalText}
           </Text>
           {isLoading && (
-            <Text size="xs" c="blue">
+            <Text size="xs" c="emerald">
               Finding location...
             </Text>
           )}

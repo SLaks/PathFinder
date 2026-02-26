@@ -300,13 +300,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       }}
     >
       {/* Header */}
-      <Box p="md" bg="blue.6" c="white" className="print-hidden">
+      <Box p="md" bg="emerald.6" c="white" className="print-hidden">
         <Group justify="space-between" align="flex-start">
           <Box>
             <Title order={1} size="h3">
               PathFinder
             </Title>
-            <Text size="sm" c="blue.1">
+            <Text size="sm" c="gold.4">
               Import. Plan. Navigate.
             </Text>
           </Box>
@@ -314,7 +314,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             variant="white"
             size="xs"
             bg="white"
-            c="blue.6"
+            c="emerald.6"
             onClick={onResetKey}
             disabled={isBusy}
             style={{ opacity: isBusy ? 0.5 : 1 }}
@@ -437,7 +437,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         {sheetConfig?.columnMapping?.statusColumnName && (
                           <Text size="xs" c="dimmed">
                             Checkboxes sync to the{" "}
-                            <Text span fw={500} c="blue">
+                            <Text span fw={500} c="emerald">
                               {sheetConfig.columnMapping.statusColumnName}
                             </Text>{" "}
                             column
@@ -448,7 +448,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           <Group gap="xs">
                             <Button
                               flex={1}
-                              color="green"
+                              color="emerald"
                               leftSection={
                                 <Icon
                                   path={mdiSync}
@@ -506,7 +506,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         <Group justify="space-between">
                           <Button
                             size="sm"
-                            color="dark"
+                            color="emerald"
                             onClick={handleImport}
                             loading={importStatus === ImportStatus.PARSING}
                             disabled={isBusy || !inputText}
@@ -638,7 +638,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           width: 8,
                           height: 8,
                           borderRadius: "50%",
-                          backgroundColor: "var(--mantine-color-blue-6)",
+                          backgroundColor: "var(--mantine-color-emerald-6)",
                         }}
                       />
                     }
@@ -688,7 +688,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       >
         <Stack gap="sm">
           {isGeocoding && (
-            <Text size="xs" c="blue" ta="center">
+            <Text size="xs" c="emerald" ta="center">
               Geocoding addresses...
             </Text>
           )}
@@ -780,7 +780,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => handleSheetSelect(sheet)}
                   style={{ borderRadius: "var(--mantine-radius-sm)" }}
                   // Hover styles need sx or css
-                  className="hover:bg-blue-50"
+                  className="hover:bg-emerald-50"
                 >
                   <Group justify="space-between">
                     <Text size="sm">{sheet.title}</Text>

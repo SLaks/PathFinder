@@ -236,9 +236,9 @@ const HereMap: React.FC<HereMapProps> = ({
           50, // radius in meters
         );
         circle.setStyle({
-          strokeColor: "rgba(37, 99, 235, 0.8)", // blue-600
+          strokeColor: "rgba(28, 138, 92, 0.8)", // emerald-600
           lineWidth: 3,
-          fillColor: "rgba(37, 99, 235, 0.2)",
+          fillColor: "rgba(28, 138, 92, 0.2)", // emerald light
         });
         map.addObject(circle);
         hoverCircleRef.current = circle;
@@ -305,7 +305,7 @@ const HereMap: React.FC<HereMapProps> = ({
           data: { id: "route-outline" },
         });
         const routeLine = new window.H.map.Polyline(lineString, {
-          style: { lineWidth: 4, strokeColor: "#2563eb", lineCap: "butt" },
+          style: { lineWidth: 4, strokeColor: "rgb(28, 138, 92)", lineCap: "butt" },
           data: { id: "route" },
         });
 
