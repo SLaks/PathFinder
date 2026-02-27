@@ -53,6 +53,7 @@ import { SheetInfo } from "../services/googleSheetService";
 import { createGoogleMapsNavigationLink } from "../services/routeService";
 import { AddressCard } from "./AddressCard";
 import { TRANSIT_MODES } from "../utils/transitModes";
+import iconUrl from "../images/icon.png";
 
 export interface SidebarProps {
   addresses: Address[];
@@ -307,11 +308,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <Box p="md" bg="emerald.6" c="white" className="print-hidden">
         <Group justify="space-between" align="flex-start">
           <Group gap="sm">
-            <img
-              src="/images/icon.png"
-              alt="Logo"
-              style={{ width: 48, height: 48 }}
-            />
+            <img src={iconUrl} alt="Logo" style={{ width: 48, height: 48 }} />
             <Box>
               <Title order={1} size="h3">
                 PathFinder
