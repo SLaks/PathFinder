@@ -293,6 +293,11 @@ const App: React.FC = () => {
           <Text size="xs" c="dimmed" ta="center">
             Your key is stored locally in your browser.
           </Text>
+          <Text size="xs" c="dimmed" ta="center">
+            <a href="/privacy.html" target="_blank" rel="noopener">
+              Privacy Policy
+            </a>
+          </Text>
         </Stack>
       </Modal>
 
