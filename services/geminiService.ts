@@ -1,36 +1,32 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { ensureAuthenticated, ai } from "./firebase";
+import { getGenerativeModel, SchemaType } from "firebase/ai";
 import { ColumnMapping } from "../types";
-import { GOOGLE_API_KEY } from "./credentials";
-
-const ai = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
 
 export const parseAddressesWithGemini = async (
   text: string,
 ): Promise<{ name?: string; address: string }[]> => {
   try {
-    const response = await ai.models.generateContent({
+    await ensureAuthenticated();
+    const model = getGenerativeModel(ai, {
       model: "gemini-2.5-flash",
-      contents: `The user has pasted content from a spreadsheet containing addresses. 
-      Extract the full address strings into a clean list.
-      If the input contains names associated with the addresses (e.g. in a separate column or preceding the address), extract the name as well.
-      Ignore headers or irrelevant columns if possible. 
-      
-      Input text:
-      ${text}`,
-      config: {
+      generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.ARRAY,
+          type: SchemaType.ARRAY,
+          nullable: false,
           items: {
-            type: Type.OBJECT,
+            type: SchemaType.OBJECT,
+            nullable: false,
             properties: {
               name: {
-                type: Type.STRING,
+                type: SchemaType.STRING,
+                nullable: true,
                 description:
                   "The name of the person or location, if available.",
               },
               address: {
-                type: Type.STRING,
+                type: SchemaType.STRING,
+                nullable: false,
                 description: "The address string.",
               },
             },
@@ -40,8 +36,17 @@ export const parseAddressesWithGemini = async (
       },
     });
 
-    if (response.text) {
-      return JSON.parse(response.text);
+    const response =
+      await model.generateContent(`The user has pasted content from a spreadsheet containing addresses. 
+      Extract the full address strings into a clean list.
+      If the input contains names associated with the addresses (e.g. in a separate column or preceding the address), extract the name as well.
+      Ignore headers or irrelevant columns if possible. 
+      
+      Input text:
+      ${text}`);
+
+    if (response.response.text()) {
+      return JSON.parse(response.response.text());
     }
     return [];
   } catch (error) {
@@ -55,9 +60,40 @@ export const identifyColumnsWithGemini = async (
   sampleRow: string[],
 ): Promise<ColumnMapping> => {
   try {
-    const response = await ai.models.generateContent({
+    await ensureAuthenticated();
+    const model = getGenerativeModel(ai, {
       model: "gemini-2.5-flash",
-      contents: `Analyze the following spreadsheet headers and a sample row to identify the column indices for:
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          nullable: false,
+          properties: {
+            addressColumnIndices: {
+              type: SchemaType.ARRAY,
+              nullable: false,
+              items: { type: SchemaType.INTEGER, nullable: false },
+              description: "Indices of address columns in order",
+            },
+            nameColumnIndices: {
+              type: SchemaType.ARRAY,
+              nullable: false,
+              items: { type: SchemaType.INTEGER, nullable: false },
+              description: "Indices of name columns in order",
+            },
+            statusColumnIndex: {
+              type: SchemaType.INTEGER,
+              nullable: true,
+              description: "Index of the status/delivered column",
+            },
+          },
+          required: ["addressColumnIndices"],
+        },
+      },
+    });
+
+    const response =
+      await model.generateContent(`Analyze the following spreadsheet headers and a sample row to identify the column indices for:
       1. Address (Required): The columns that make up the address (e.g., "Address", "City", "State", "Zip").
          Return ALL relevant column indices in proper order to render an address.
          Ignore columns with duplicate information (e.g., if "Full Address" is present, ignore "Address", "City", etc.; ignore a "Street" column if the street name is already in other address columns).
@@ -67,34 +103,10 @@ export const identifyColumnsWithGemini = async (
       Headers: ${JSON.stringify(headers)}
       Sample Row: ${JSON.stringify(sampleRow)}
       
-      Return the 0-based index for each found column. If not found, omit the field.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            addressColumnIndices: {
-              type: Type.ARRAY,
-              items: { type: Type.INTEGER },
-              description: "Indices of address columns in order",
-            },
-            nameColumnIndices: {
-              type: Type.ARRAY,
-              items: { type: Type.INTEGER },
-              description: "Indices of name columns in order",
-            },
-            statusColumnIndex: {
-              type: Type.INTEGER,
-              description: "Index of the status/delivered column",
-            },
-          },
-          required: ["addressColumnIndices"],
-        },
-      },
-    });
+      Return the 0-based index for each found column. If not found, omit the field.`);
 
-    if (response.text) {
-      return JSON.parse(response.text);
+    if (response.response.text()) {
+      return JSON.parse(response.response.text());
     }
     throw new Error("Empty response from Gemini");
   } catch (error) {

@@ -12,12 +12,12 @@
     "test:visual": "playwright test"
   },
   "dependencies": {
-    "@google/genai": "^1.30.0",
     "@here/maps-api-for-javascript": "^2.0.1",
     "@mantine/core": "^8.3.9",
     "@mantine/hooks": "^8.3.9",
     "@mdi/js": "^7.4.47",
     "@mdi/react": "^1.6.1",
+    "firebase": "^12.10.0",
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
     "react": "^19.2.0",
