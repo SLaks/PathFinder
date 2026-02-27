@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Route Optimizer</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --link-color: #0066cc;
+            --heading-color: #111111;
+            --container-width: 800px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1a1a1a;
+                --text-color: #e0e0e0;
+                --link-color: #4da3ff;
+                --heading-color: #ffffff;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: var(--container-width);
+            width: 100%;
+        }
+
+        h1 {
+            color: var(--heading-color);
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 1rem;
+        }
+
+        h2 {
+            color: var(--heading-color);
+            font-size: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        p {
+            margin-bottom: 1.2rem;
+        }
+
+        a {
+            color: var(--link-color);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .notice {
+            background: rgba(0, 102, 204, 0.1);
+            border-left: 4px solid var(--link-color);
+            padding: 1rem;
+            margin: 2rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        footer {
+            margin-top: 4rem;
+            font-size: 0.9rem;
+            color: #888;
+            border-top: 1px solid #eee;
+            padding-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy Policy</h1>
+        
+        <p>Last updated: February 26, 2026</p>
+
+        <div class="notice">
+            <strong>Key Information:</strong> This application is a client-side tool. I (the developer) do not run a server and do not collect, store, or see any of your data.
+        </div>
+
+        <h2>Data Handling</h2>
+        <p>The Route Optimizer application operates entirely in your browser. All data you enter, including addresses and routes, is stored locally on your device or in the Google Sheets you authorize.</p>
+
+        <h2>Third-Party Services</h2>
+        <p>To provide its functionality, the application transmits data to the following third-party services:</p>
+        
+        <ul>
+            <li>
+                <strong>Google:</strong> Used for data storage via Google Sheets, and to parse columns via Gemini. Your use is subject to the 
+                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>.
+            </li>
+            <li>
+                <strong>HERE Maps:</strong> Used for geocoding, mapping, and route optimization. Addresses and route parameters are sent to HERE to calculate optimizations. Your use is subject to the 
+                <a href="https://legal.here.com/en-gb/privacy" target="_blank" rel="noopener">HERE Privacy Policy</a>.
+            </li>
+        </ul>
+
+        <h2>Cookies and Local Storage</h2>
+        <p>The application uses your browser's Local Storage to remember your settings and API keys locally. No tracking or advertising cookies are used.</p>
+
+        <footer>
+            <p>&copy; 2026 Route Optimizer. Use at your own risk.</p>
+            <p><a href="/">Back to Application</a> | <a href="./terms.html">Terms of Service</a></p>
+        </footer>
+    </div>
+</body>
+</html>
