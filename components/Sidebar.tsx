@@ -367,6 +367,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     bg={colorScheme === "dark" ? "dark.7" : "white"}
                     justify="space-between"
                     onClick={() => setIsSourceExpanded(!isSourceExpanded)}
+                    wrap="nowrap"
                     style={{
                       cursor: "pointer",
                       borderBottom: isSourceExpanded
@@ -376,32 +377,54 @@ const Sidebar: React.FC<SidebarProps> = ({
                         : "none",
                     }}
                   >
-                    <Group gap="xs" style={{ overflow: "hidden" }}>
+                    <Group
+                      gap="xs"
+                      wrap="nowrap"
+                      style={{ overflow: "hidden", flex: 1 }}
+                    >
                       {!isSourceExpanded && sheetConfig ? (
                         <>
-                          <Icon
-                            path={mdiGoogleSpreadsheet}
-                            size={0.8}
-                            color="green"
-                          />
-                          <Text size="sm" fw={500} truncate>
+                          <Box
+                            style={{
+                              flexShrink: 0,
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <Icon
+                              path={mdiGoogleSpreadsheet}
+                              size={0.8}
+                              color="green"
+                            />
+                          </Box>
+                          <Text
+                            size="sm"
+                            fw={500}
+                            truncate="end"
+                            style={{ flexShrink: 1 }}
+                          >
                             {sheetConfig.spreadsheetName}
                           </Text>
                           {sheetConfig.sheetTitle && (
-                            <Text size="xs" c="dimmed">
+                            <Text
+                              size="xs"
+                              c="dimmed"
+                              truncate="end"
+                              style={{ flexShrink: 2 }}
+                            >
                               / {sheetConfig.sheetTitle}
                             </Text>
                           )}
                         </>
                       ) : (
-                        <Text size="sm" c="dimmed" fw={500}>
+                        <Text size="sm" c="dimmed" fw={500} truncate="end">
                           {isSourceExpanded
                             ? "Configure Import"
                             : "No Source Selected"}
                         </Text>
                       )}
                     </Group>
-                    <Group gap={4}>
+                    <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
                       {!isSourceExpanded && sheetConfig && (
                         <ActionIcon
                           variant="subtle"
