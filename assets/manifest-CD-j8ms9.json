@@ -1,0 +1,20 @@
+{
+  "name": "PathFinder",
+  "short_name": "PathFinder",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1A1C1A",
+  "theme_color": "#1c8a5c",
+  "icons": [
+    {
+      "src": "/images/icon.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/icon-16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    }
+  ]
+}
