@@ -24,7 +24,7 @@ When you first launch the app, you will be prompted to enter your **HERE Maps AP
 
 - Get a free key at [platform.here.com](https://platform.here.com/portal/sign-up).
    1. Create an account
-   2. Enter payment credentials, which are required by the platform.  Here has a generous [free quota](https://www.here.com/get-started/pricing) and normal usage should always be free.
+   2. Enter payment credentials, which are required by the platform.  The HERE Maps API has a generous [free quota](https://www.here.com/get-started/pricing) and normal usage should always be free.
    3. Create a new Application (Access Manager, Apps, Register New App) with any name.
    4. Create an API key and copy it to the clipboard.
    5. Open [PathFinder.SLaks.net](https://pathfinder.slaks.net) and paste the API key.
