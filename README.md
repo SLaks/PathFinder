@@ -12,7 +12,7 @@ PathFinder is a powerful, web-based route optimization tool designed for deliver
 - **🚗 Multiple Transit Modes**: Optimize routes for Car, Truck, Bicycle, or Pedestrian travel.
 - **🗺️ Interactive Mapping**: High-performance map with turn-by-turn directions.
 - **📱 Mobile Ready**: Responsive design with a bottom-sheet interface for on-the-go navigation.
-- **⚡ Live Turn-by-Turn**: Turn-by-turn directions to guide you between stops.
+- **⚡ Full directions**: Turn-by-turn directions to guide you between stops.
 
 ![Screenshot of full UI](images/docs/sample-screenshot.png)
 
@@ -24,10 +24,10 @@ When you first launch the app, you will be prompted to enter your **HERE Maps AP
 
 - Get a free key at [platform.here.com](https://platform.here.com/portal/sign-up).
    1. Create an account
-   2. Enter payment credentials, which are required by the platform.  Here has a generous free quota and normal usage should always be free
+   2. Enter payment credentials, which are required by the platform.  Here has a generous [free quota](https://www.here.com/get-started/pricing) and normal usage should always be free.
    3. Create a new Application (Access Manager, Apps, Register New App) with any name.
-   4. Create an API key and copy it to the clipboard
-   5. Open pathfinder.slaks.net and paste the API key.
+   4. Create an API key and copy it to the clipboard.
+   5. Open [PathFinder.SLaks.net](https://pathfinder.slaks.net) and paste the API key.
 - The key is stored safely in your browser's local storage.
 - You can generate a **Shareable Link** to quickly set up the app on other devices without re-typing the key.
 

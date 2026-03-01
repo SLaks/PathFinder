@@ -220,6 +220,15 @@ const App: React.FC = () => {
         size="md"
       >
         <Stack>
+          {!apiKey && (
+            <a
+              target="_blank"
+              href="https://github.com/SLaks/PathFinder/?tab=readme-ov-file#pathfinder-intelligent-route-optimizer"
+              rel="noreferrer"
+            >
+              User Guide
+            </a>
+          )}
           <Text size="sm" c="dimmed" style={{ textAlign: "justify" }}>
             This application uses HERE Maps for geocoding, mapping, and route
             optimization. Need a key? Get a free key from{" "}
