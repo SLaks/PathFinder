@@ -11,27 +11,27 @@ export interface TransitModeInfo {
 export const TRANSIT_MODES: TransitModeInfo[] = [
   {
     mode: "car",
-    label: "Car",
+    label: "Driving",
     icon: mdiCar,
     hereMode: "car",
   },
   {
-    mode: "truck",
-    label: "Truck",
-    icon: mdiTruck,
-    hereMode: "truck",
-  },
-  {
     mode: "pedestrian",
-    label: "Walk",
+    label: "Walking",
     icon: mdiWalk,
     hereMode: "pedestrian",
   },
   {
     mode: "bicycle",
-    label: "Bike",
+    label: "Biking",
     icon: mdiBike,
     hereMode: "bicycle",
+  },
+  {
+    mode: "truck",
+    label: "Trucking",
+    icon: mdiTruck,
+    hereMode: "truck",
   },
 ];
 

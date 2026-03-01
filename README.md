@@ -1,19 +1,58 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# PathFinder: Intelligent Route Optimizer
 
-# Run and deploy your AI Studio app
+![PathFinder Icon](images/icon-120.png)
 
-This contains everything you need to run your app locally.
+PathFinder is a powerful, web-based route optimization tool designed for delivery drivers, field service professionals, and anyone needing to visit multiple locations efficiently. It integrates seamlessly with Google Sheets and utilizes the HERE Maps API to provide high-performance geocoding, interactive mapping, and optimal route generation.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1_NuAjHwUcQr03hL5rhOp6ebGGGjTCtmi
+## Key Features
 
-## Run Locally
+- **🎯 Multi-Stop Optimization**: Automatically reorders your stops to minimize travel time and distance.
+- **📊 Google Sheets Integration**: Sync addresses directly from a spreadsheet and update delivery status (checkboxes) back to the sheet in real-time.
+- **⌨️ Manual Entry**: Paste lists of addresses to quickly parse and map them.
+- **🚗 Multiple Transit Modes**: Optimize routes for Car, Truck, Bicycle, or Pedestrian travel.
+- **🗺️ Interactive Mapping**: High-performance map with turn-by-turn directions.
+- **📱 Mobile Ready**: Responsive design with a bottom-sheet interface for on-the-go navigation.
+- **⚡ Live Turn-by-Turn**: Turn-by-turn directions to guide you between stops.
 
-**Prerequisites:** Node.js
+![Screenshot of full UI](images/docs/sample-screenshot.png)
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## User Guide
+
+### 1. Configure HERE API Key
+
+When you first launch the app, you will be prompted to enter your **HERE Maps API Key**.
+
+- Get a free key at [platform.here.com](https://platform.here.com/portal/sign-up).
+   1. Create an account
+   2. Enter payment credentials, which are required by the platform.  Here has a generous free quota and normal usage should always be free
+   3. Create a new Application (Access Manager, Apps, Register New App) with any name.
+   4. Create an API key and copy it to the clipboard
+   5. Open pathfinder.slaks.net and paste the API key.
+- The key is stored safely in your browser's local storage.
+- You can generate a **Shareable Link** to quickly set up the app on other devices without re-typing the key.
+
+### 2. Importing Data
+
+- **Google Sheets**: Click "Connect Google Sheet" to select a spreadsheet. PathFinder automatically identifies address and name columns.
+- **Manual Parse**: Paste any text containing addresses into the "Paste Text" area. The AI-powered parser will extract valid stops automatically.
+
+### 3. Optimizing Your Route
+
+- Check any entries that are already completed.
+  - If your sheet has a checkbox column like "Delivered" or "Complete", the checkboxes will automatically sync to that column.
+  - Otherwise, checked items won't be remembered anywhere.
+- Select your **Transit Mode** (e.g., Driving or Walking) from the dropdown in the footer.
+- Click **Optimize Route**. PathFinder will calculate the most efficient sequence starting from your current location.
+- You can then click **Start Navigation** to navigate to the first stop in Google Maps.
+
+### 4. Turn-by-Turn Directions
+
+Switch to the **Directions** tab in the sidebar to see detailed instructions for your current path. Hovering over a direction step will highlight that segment on the map.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License.
