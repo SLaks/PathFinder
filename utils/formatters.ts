@@ -2,7 +2,10 @@ export const getInitials = (text: string): string => {
   if (!text) return "?";
 
   // Clean text and split by spaces
-  const parts = text.trim().split(/\s+/);
+  const parts = text
+    .trim()
+    .replace(/[^\w\s]/g, "")
+    .split(/\s+/);
 
   if (parts.length === 0) return "?";
 
