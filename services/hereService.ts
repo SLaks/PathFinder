@@ -14,6 +14,8 @@ export interface HereAction {
   instruction: string;
   offset: number;
   sectionIndex: number;
+  direction?: string;
+  severity?: string;
 }
 
 interface HereRouteSection {

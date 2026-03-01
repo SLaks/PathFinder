@@ -5,6 +5,16 @@ import {
   mdiChevronDown,
   mdiChevronRight,
   mdiGoogleSpreadsheet,
+  mdiMapMarker,
+  mdiMapMarkerCheck,
+  mdiArrowLeft,
+  mdiArrowRight,
+  mdiArrowULeftTop,
+  mdiArrowUp,
+  mdiArrowTopRight,
+  mdiArrowTopLeft,
+  mdiExitToApp,
+  mdiDirectionsFork,
 } from "@mdi/js";
 import {
   Stack,
@@ -54,6 +64,82 @@ import { createGoogleMapsNavigationLink } from "../services/routeService";
 import { AddressCard } from "./AddressCard";
 import { TRANSIT_MODES } from "../utils/transitModes";
 import iconUrl from "../images/icon.png";
+
+const getActionIcon = (actionItem: HereAction) => {
+  const action = actionItem.action.toLowerCase();
+  const dir = actionItem.direction?.toLowerCase() || "";
+
+  if (action === "depart") return mdiMapMarker;
+  if (action === "arrive") return mdiMapMarkerCheck;
+  if (action.includes("uturn") || action.includes("u-turn"))
+    return mdiArrowULeftTop;
+  if (action === "keep") {
+    if (dir.includes("left")) return mdiArrowTopLeft;
+    if (dir.includes("right")) return mdiArrowTopRight;
+    return mdiArrowUp;
+  }
+  if (action === "turn") {
+    if (dir.includes("left")) return mdiArrowLeft;
+    if (dir.includes("right")) return mdiArrowRight;
+  }
+  if (action === "exit" || action === "ramp") {
+    if (dir.includes("left")) return mdiArrowTopLeft;
+    if (dir.includes("right")) return mdiArrowTopRight;
+    return mdiExitToApp;
+  }
+  if (action === "roundaboutpass" || action.includes("roundabout"))
+    return mdiSync;
+  if (action === "fork") return mdiDirectionsFork;
+
+  if (dir.includes("left")) return mdiArrowLeft;
+  if (dir.includes("right")) return mdiArrowRight;
+
+  return mdiArrowUp;
+};
+
+const formatActionTitle = (actionItem: HereAction) => {
+  let title = actionItem.action
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim();
+
+  if (actionItem.direction) {
+    const dirMap: Record<string, string> = {
+      left: "Left",
+      right: "Right",
+      lightLeft: "Slight Left",
+      lightRight: "Slight Right",
+      hardLeft: "Hard Left",
+      hardRight: "Hard Right",
+      middle: "Straight",
+    };
+    const formattedDir =
+      dirMap[actionItem.direction] ||
+      actionItem.direction.charAt(0).toUpperCase() +
+        actionItem.direction.slice(1);
+
+    // Don't duplicate turn left left
+    if (!title.toLowerCase().includes(formattedDir.toLowerCase())) {
+      title += ` ${formattedDir}`;
+    }
+  }
+
+  return title.trim();
+};
+
+const formatDistance = (meters: number) => {
+  if (meters < 1000) return `${meters} m`;
+  return `${(meters / 1000).toFixed(1)} km`;
+};
+
+const formatDuration = (seconds: number) => {
+  if (seconds < 60) return "< 1 min";
+  const mins = Math.ceil(seconds / 60);
+  if (mins < 60) return `${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  const remainingMins = mins % 60;
+  return remainingMins > 0 ? `${hrs} h ${remainingMins} min` : `${hrs} h`;
+};
 
 export interface SidebarProps {
   addresses: Address[];
@@ -658,47 +744,60 @@ const Sidebar: React.FC<SidebarProps> = ({
                 Optimize a route to see turn-by-turn directions.
               </Text>
             ) : (
-              <Timeline active={-1} bulletSize={24} lineWidth={2}>
-                {routeActions.map((action, index) => (
-                  <Timeline.Item
-                    key={index}
-                    title={action.action}
-                    bullet={
-                      <Box
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          backgroundColor: "var(--mantine-color-emerald-6)",
-                        }}
-                      />
-                    }
-                  >
-                    <Box
-                      onMouseEnter={() => onHoverAction(action)}
-                      onMouseLeave={() => onHoverAction(null)}
-                      style={{ cursor: "pointer" }}
+              <Timeline active={-1} bulletSize={32} lineWidth={2}>
+                {routeActions.map((action, index) => {
+                  const IconPath = getActionIcon(action);
+                  return (
+                    <Timeline.Item
+                      key={index}
+                      title={
+                        <Text fw={600} size="sm">
+                          {formatActionTitle(action)}
+                        </Text>
+                      }
+                      bullet={
+                        <Box
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            backgroundColor: "var(--mantine-color-emerald-6)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Icon path={IconPath} size={0.7} color="white" />
+                        </Box>
+                      }
                     >
-                      <Text
-                        size="sm"
-                        dangerouslySetInnerHTML={{
-                          __html: action.instruction,
-                        }}
-                      />
-                      <Group gap="xs" mt={4}>
-                        <Text size="xs" c="dimmed">
-                          {action.length} m
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                          •
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                          {Math.ceil(action.duration / 60)} min
-                        </Text>
-                      </Group>
-                    </Box>
-                  </Timeline.Item>
-                ))}
+                      <Box
+                        onMouseEnter={() => onHoverAction(action)}
+                        onMouseLeave={() => onHoverAction(null)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <Text
+                          size="sm"
+                          dangerouslySetInnerHTML={{
+                            __html: action.instruction,
+                          }}
+                        />
+                        <Group gap="xs" mt={4}>
+                          <Text size="xs" c="dimmed" fw={500}>
+                            {formatDistance(action.length)}
+                          </Text>
+                          <Text size="xs" c="dimmed">
+                            •
+                          </Text>
+                          <Text size="xs" c="dimmed" fw={500}>
+                            {formatDuration(action.duration)}
+                          </Text>
+                        </Group>
+                      </Box>
+                    </Timeline.Item>
+                  );
+                })}
               </Timeline>
             )}
           </Tabs.Panel>
