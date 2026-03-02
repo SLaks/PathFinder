@@ -97,7 +97,7 @@ export async function syncSheetData(
   }
 
   // Parse addresses
-  const addresses = parseAddressesFromSheet(rows, mapping);
+  const addresses = parseAddressesFromSheet(rows, mapping, headers);
 
   return {
     addresses,

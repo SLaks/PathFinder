@@ -12,6 +12,7 @@ interface SidebarAddressListProps {
   onHoverAddress: (id: string | null) => void;
   handleToggleComplete: (id: string, completed: boolean) => void;
   sheetConfig: SheetConfig| null;
+  onEditRow: (address: Address) => void;
 }
 
 export const SidebarAddressList: React.FC<SidebarAddressListProps> = ({
@@ -23,6 +24,7 @@ export const SidebarAddressList: React.FC<SidebarAddressListProps> = ({
   onHoverAddress,
   handleToggleComplete,
   sheetConfig,
+  onEditRow,
 }) => {
   const pendingAddresses = addresses.filter((a) => !a.completed);
   const completedAddresses = addresses.filter((a) => a.completed);
@@ -75,6 +77,7 @@ export const SidebarAddressList: React.FC<SidebarAddressListProps> = ({
             disabled={isBusy}
             onToggleComplete={(val) => handleToggleComplete(addr.id, val)}
             statusColumnName={sheetConfig?.columnMapping?.statusColumnName}
+            onEditRow={() => onEditRow(addr)}
           />
         ))}
       </Stack>
@@ -94,6 +97,7 @@ export const SidebarAddressList: React.FC<SidebarAddressListProps> = ({
                 disabled={isBusy}
                 onToggleComplete={(val) => handleToggleComplete(addr.id, val)}
                 statusColumnName={sheetConfig?.columnMapping?.statusColumnName}
+                onEditRow={() => onEditRow(addr)}
               />
             ))}
           </Stack>

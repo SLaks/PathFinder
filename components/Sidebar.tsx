@@ -19,7 +19,10 @@ import {
   TransitMode,
 } from "../types";
 import { HereAction } from "../services/hereService";
-import { parseAddressesFromText } from "../services/addressService";
+import {
+  createAddressFromSheet,
+  parseAddressesFromText,
+} from "../services/addressService";
 import {
   getSheetConfig,
   setSheetConfig as saveSheetConfig,
@@ -35,6 +38,8 @@ import {
 } from "../services/sheetIntegrationService";
 import { SheetInfo } from "../services/googleSheetService";
 import { createGoogleMapsNavigationLink } from "../services/routeService";
+import { SidebarRowDialog } from "./sidebar/SidebarRowDialog";
+import { updateSheetCell } from "../services/googleSheetService";
 import { SidebarDataSourcePanel } from "./sidebar/SidebarDataSourcePanel";
 import { SidebarAddressList } from "./sidebar/SidebarAddressList";
 import { SidebarDirectionsPanel } from "./sidebar/SidebarDirectionsPanel";
@@ -87,6 +92,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     null,
   );
   const [isSyncing, setIsSyncing] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [isSavingRow, setIsSavingRow] = useState(false);
   const isBusy =
     isOptimizing ||
     isGeocoding ||
@@ -273,6 +280,51 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const handleSaveRow = async (newData: string[]) => {
+    if (!editingAddress || !editingAddress.sheetRow || !sheetConfig) return;
+
+    setIsSavingRow(true);
+    try {
+      // Find what changed and update cells
+      const originalData = editingAddress.fullRowData || [];
+      const updates = newData
+        .map((val, idx) => (val !== originalData[idx] ? { val, idx } : null))
+        .filter((u): u is { val: string; idx: number } => u !== null);
+
+      await Promise.all(
+        updates.map((update) =>
+          updateSheetCell(
+            sheetConfig.spreadsheetId,
+            sheetConfig.sheetTitle!,
+            editingAddress.sheetRow!,
+            update.idx,
+            update.val,
+          ),
+        ),
+      );
+
+      // Update local state
+      setAddresses((prev) =>
+        prev.map((a) =>
+          a.id === editingAddress.id
+            ? createAddressFromSheet(
+                newData,
+                sheetConfig.columnMapping!,
+                editingAddress.sheetRow!,
+                editingAddress.headers,
+              )!
+            : a,
+        ),
+      );
+      setEditingAddress(null);
+    } catch (error) {
+      console.error("Failed to save row changes:", error);
+      alert("Failed to save changes to the spreadsheet.");
+    } finally {
+      setIsSavingRow(false);
+    }
+  };
+
   return (
     <Stack
       h="100%"
@@ -353,6 +405,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onHoverAddress={onHoverAddress}
                 handleToggleComplete={handleToggleComplete}
                 sheetConfig={sheetConfig}
+                onEditRow={setEditingAddress}
               />
             </Stack>
           </Tabs.Panel>
@@ -387,6 +440,15 @@ const Sidebar: React.FC<SidebarProps> = ({
           setSheetSelection((prev) => ({ ...prev, isOpen: false }))
         }
         onSelect={handleSheetSelect}
+      />
+
+      <SidebarRowDialog
+        key={editingAddress?.id}
+        opened={!!editingAddress}
+        onClose={() => setEditingAddress(null)}
+        address={editingAddress}
+        onSave={handleSaveRow}
+        isSaving={isSavingRow}
       />
     </Stack>
   );

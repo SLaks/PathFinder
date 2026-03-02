@@ -57,6 +57,7 @@ export function createAddressFromSheet(
   row: string[],
   mapping: ColumnMapping,
   rowIndex: number,
+  headers?: string[],
 ): Address | null {
   // Concatenate address parts
   const addressParts = mapping.addressColumnIndices
@@ -88,6 +89,8 @@ export function createAddressFromSheet(
     isGeocoding: true,
     sheetRow: rowIndex + 2, // +2 because 1-based and header is row 1
     completed: isCompleted,
+    headers,
+    fullRowData: row,
   };
 }
 
@@ -97,11 +100,12 @@ export function createAddressFromSheet(
 export function parseAddressesFromSheet(
   rows: string[][],
   mapping: ColumnMapping,
+  headers: string[],
 ): Address[] {
   const addresses: Address[] = [];
 
   rows.forEach((row, rowIndex) => {
-    const address = createAddressFromSheet(row, mapping, rowIndex);
+    const address = createAddressFromSheet(row, mapping, rowIndex, headers);
     if (address) {
       addresses.push(address);
     }

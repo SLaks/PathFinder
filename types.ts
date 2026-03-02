@@ -13,6 +13,8 @@ export interface Address {
   isGeocoding?: boolean;
   sheetRow?: number; // 1-based row index in the sheet
   completed?: boolean;
+  headers?: string[]; // Original spreadsheet headers
+  fullRowData?: string[]; // Original spreadsheet row data
 }
 
 export interface RouteSummary {

@@ -36,7 +36,13 @@ When you first launch the app, you will be prompted to enter your **HERE Maps AP
 - **Google Sheets**: Click "Connect Google Sheet" to select a spreadsheet. PathFinder automatically identifies address and name columns.
 - **Manual Parse**: Paste any text containing addresses into the "Paste Text" area. The AI-powered parser will extract valid stops automatically.
 
-### 3. Optimizing Your Route
+### 3. Manipulating Data
+
+You can check any address to mark it as completed and exclude it from navigation.  If your spreadsheet has a column like "Delivered" or "Completed", the checkbox will sync to that column.
+
+You can also click the edit button to see and edit the full spreadsheet row for any address.
+
+### 4. Optimizing Your Route
 
 - Check any entries that are already completed.
   - If your sheet has a checkbox column like "Delivered" or "Complete", the checkboxes will automatically sync to that column.
@@ -45,7 +51,7 @@ When you first launch the app, you will be prompted to enter your **HERE Maps AP
 - Click **Optimize Route**. PathFinder will calculate the most efficient sequence starting from your current location.
 - You can then click **Start Navigation** to navigate to the first stop in Google Maps.
 
-### 4. Turn-by-Turn Directions
+### 5. Turn-by-Turn Directions
 
 Switch to the **Directions** tab in the sidebar to see detailed instructions for your current path. Hovering over a direction step will highlight that segment on the map.
 

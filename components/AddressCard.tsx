@@ -9,7 +9,10 @@ import {
   Box,
   useMantineColorScheme,
   Tooltip,
+  ActionIcon,
 } from "@mantine/core";
+import Icon from "@mdi/react";
+import { mdiPlaylistEdit } from "@mdi/js";
 import { Address } from "../types";
 import { getAddressColor } from "../utils/colors";
 import { getInitials } from "../utils/formatters";
@@ -25,6 +28,7 @@ export interface AddressCardProps {
   disabled?: boolean;
   onToggleComplete?: (completed: boolean) => void;
   statusColumnName?: string;
+  onEditRow?: () => void;
 }
 
 export const AddressCard: React.FC<AddressCardProps> = ({
@@ -38,6 +42,7 @@ export const AddressCard: React.FC<AddressCardProps> = ({
   disabled = false,
   onToggleComplete,
   statusColumnName,
+  onEditRow,
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const color = getAddressColor(index);
@@ -63,19 +68,19 @@ export const AddressCard: React.FC<AddressCardProps> = ({
             ? "var(--mantine-color-red-9)"
             : "var(--mantine-color-red-0)"
           : isLoading
-          ? colorScheme === "dark"
-            ? "var(--mantine-color-emerald-9)"
-            : "var(--mantine-color-emerald-0)"
-          : "transparent", // We use a custom color for bubble backgrounds.
+            ? colorScheme === "dark"
+              ? "var(--mantine-color-emerald-9)"
+              : "var(--mantine-color-emerald-0)"
+            : "transparent", // We use a custom color for bubble backgrounds.
         borderColor: isError
           ? colorScheme === "dark"
             ? "var(--mantine-color-red-7)"
             : "var(--mantine-color-red-2)"
           : isLoading
-          ? colorScheme === "dark"
-            ? "var(--mantine-color-emerald-7)"
-            : "var(--mantine-color-emerald-2)"
-          : undefined,
+            ? colorScheme === "dark"
+              ? "var(--mantine-color-emerald-7)"
+              : "var(--mantine-color-emerald-2)"
+            : undefined,
         transition: "all 0.2s ease",
       }}
     >
@@ -148,6 +153,22 @@ export const AddressCard: React.FC<AddressCardProps> = ({
             </Text>
           )}
         </Stack>
+
+        {!isCompact && address.headers && (
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditRow?.();
+            }}
+            disabled={disabled}
+            className="print-hidden"
+            title="Edit spreadsheet data"
+          >
+            <Icon path={mdiPlaylistEdit} size={0.8} />
+          </ActionIcon>
+        )}
       </Group>
     </Paper>
   );
